@@ -10,6 +10,13 @@ extern "C" {
 #define ERROR_TOO_BIG_SIZE						(ERROR_SHM_BASE + 1)
 #define ERROR_GET_SHM_FAILED					(ERROR_SHM_BASE + 2)
 #define ERROR_SHM_NOT_INIT						(ERROR_SHM_BASE + 3)
+#define ERROR_NULL_KEY							(ERROR_SHM_BASE + 4)
+#define ERROR_NULL_VALUE						(ERROR_SHM_BASE + 5)
+#define ERROR_GET_LOCK							(ERROR_SHM_BASE + 6)
+#define ERROR_FULL_USED							(ERROR_SHM_BASE + 7)
+#define ERROR_TOO_LONG_KEY						(ERROR_SHM_BASE + 8)
+#define ERROR_TOO_LONG_VALUE					(ERROR_SHM_BASE + 9)
+#define ERROR_NOT_ENOUGH						(ERROR_SHM_BASE + 10)
 
 #ifdef __cplusplus 
 } 
