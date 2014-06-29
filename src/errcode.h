@@ -17,6 +17,7 @@ extern "C" {
 #define ERROR_TOO_LONG_KEY						(ERROR_SHM_BASE + 8)
 #define ERROR_TOO_LONG_VALUE					(ERROR_SHM_BASE + 9)
 #define ERROR_NOT_ENOUGH						(ERROR_SHM_BASE + 10)
+#define ERROR_GET_INDEX							(ERROR_SHM_BASE + 11)
 
 #ifdef __cplusplus 
 } 

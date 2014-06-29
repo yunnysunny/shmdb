@@ -21,7 +21,7 @@ typedef struct MemIndex {
 	/**
 	* the status of the current memery index.
 	*/
-	unsigned char status;//
+	unsigned char status;//0:normal,1:deleted
 }STMemIndex;
 /**
 * the value area of the hashmap.
@@ -46,7 +46,8 @@ typedef struct HashShareMemHead {
 	/***/
 	unsigned int totalUsed;
 	unsigned int baseUsed;
-	/** the current offset of MemData which is unused. */
+	/** the current offset of MemData which is unused.
+	the value of it is cacluated form the beginning of the base area of index.  */
 	unsigned int valueOffset;
 	unsigned int memLen;
 }STHashShareMemHead;
@@ -57,6 +58,7 @@ typedef struct HashShareHandle {
 	long shmaddr;/*share memory attach to current process*/
 	
 }STHashShareHandle;
+
 
 #define INT_LENGTH 				(sizeof(int))
 #define CHAR_LENGTH				(sizeof(char))

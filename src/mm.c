@@ -152,6 +152,101 @@ int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head) {
 	return 0;
 	
 }
+
+static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
+	unsigned short keyLen, unsigned short valueLen,
+	unsigned int *index,unsigned int lastIndex) {
+	if (*index >= head->totalLen) {
+		return NULL;
+	}
+	{
+		void *indexOffset = shmaddr + SIZE_OF_ST_HASH_SHARE_MEM_HEAD + *index * SIZE_OF_ST_MEM_INDEX;
+		unsigned int dataOffset = 0;
+		void *valueArea = NULL;
+		
+		
+		switch (*indexOffset) {
+			case STATUS_DEL: {
+				unsigned short existValueLen = 0;
+				unsigned short existKeyLen = 0;
+				chars2int(indexOffset+1,&dataOffset);
+				valueArea = shmaddr + dataOffset;
+				chars2int((unsigned char*)valueArea+4,&existKeyLen);
+				chars2int((unsigned char*)valueArea+6,&existValueLen);
+				if ((existKeyLen + existValueLen) <= (keyLen + valueLen)) {//find a index
+
+					*indexOffset = STATUS_INUSED;
+					//int2chars(valueArea+4,keyLen);
+
+					int2chars(head->totalUsed+1, (unsigned char*)shmaddr+8);
+					
+					if (lastIndex > head->baseLen) {//lastIndex is in zipper area
+						
+					} else {//lastIndex is in base area
+						int2chars(head->baseUsed+12,(unsigned char*)shmaddr+1);						
+					}
+					return valueArea;
+					//break;
+				} else {// to test the next index in the zipper area
+					unsigned int existIndex = 0;
+					chars2int(((unsigned char*)indexOffset+5), &existIndex);
+					if (existIndex > 0) {
+						lastIndex = *index;
+						*index = existIndex;
+						
+						return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
+					} else {
+						lastIndex = *index;
+						*index = head->baseLen + (head->totalUsed-head->baseUsed);
+						return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
+					}
+					
+				}
+			}
+			break;
+			case STATUS_INUSED: {// to test the next index in the zipper area
+				unsigned int existIndex = 0;
+				chars2int(((unsigned char*)indexOffset+5), &existIndex);
+				if (existIndex > 0) {
+					lastIndex = *index;
+					*index = existIndex;
+					
+					return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
+				} else {
+					lastIndex = *index;
+					*index = head->baseLen + (head->totalUsed-head->baseUsed);
+					return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
+				}
+			}
+			break;
+			case STATUS_UNSED: {
+				
+				unsigned int newValueOffset = head.valueOffset + keyLen + valueLen;//the value offset will be used next 
+				//head begin
+				int2chars(head.totalUsed+1,(unsigned char*)shmaddr+8);//increase totalUsed
+				
+				int2chars(head.baseUsed+1,(unsigned char*)shmaddr+12);//increase baseUsed
+									
+				int2Chars(newValueOffset,(unsigned char*)shmaddr+16);//set value offset which will be used next
+				
+				//head finish
+				//index area begin
+				*indexOffset = STATUS_INUSED;
+				dataOffset = head.valueOffset;//
+				int2chars(dataOffset,(unsigned char*)indexOffset+1);//写入值偏移量
+				memset(indexOffset+5,0,4);//nextIndex = 0
+				//index area finish
+				return 	shmaddr+newValueOffset;
+			}
+			break;
+			default:
+			printf("invalid status:%d\n",*indexOffset);
+			return NULL;
+			break;
+		}
+	}
+	
+}
 /**
  * put the value into hashtable.
  * 
@@ -176,6 +271,7 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		struct sembuf sb;
 		struct timespec time;
 		STHashShareMemHead head;
+		int rv = 0;
 		
 		memset(&time, 0, sizeof(time));
 		memset(&head,0,sizeof(STHashShareMemHead));
@@ -188,47 +284,45 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		
 		if(semtimedop(handle->semid,&sb,1,&time)  == -1) {
 			perror("semtimedop error:");
-			return ERROR_GET_LOCK;
+			rv = ERROR_GET_LOCK;
+			goto end;
 		}
 		mm_getInfo(handle,&head);
 		if (head.valueOffset + BASE_SIZE_OF_ST_MEM_DATA + keyLen + valueLen >= head.memLen) {
-			return ERROR_NOT_ENOUGH;//not enough share memory
+			rv = ERROR_NOT_ENOUGH;//not enough share memory
+			goto end;
 		}
 		if (head.totalUsed < head.totalLen) {//can create an index 
 			unsigned int index = getHashNum(key,strlen(key),head.baseLen);//get hash index number by the key string
 			void *shmaddr = (void *)handle->shmaddr;
 			//the MemIndex's offset in share memory
-			void *indexOffset = shmaddr + SIZE_OF_ST_HASH_SHARE_MEM_HEAD + index * SIZE_OF_ST_MEM_INDEX;
-			char status = *indexOffset;//the first byte of MemIndex indicate the stauts of it
-			unsigned int dataOffset = 0;
-			//char bytes[4] = {0};
-			void *valueArea = shmaddr + head.valueOffset;//get the value offset
-			
-			
-			switch(status) {
-				case STATUS_UNSED: {//the MemIndex is not used
-					char bytes[4] = {0};
-					//head begin
-					int2chars(head.totalUsed+1,bytes);
-					memcpy(shmadd+8,);
-					//head finish
-					//index area begin
-					*indexOffset = STATUS_INUSED;
-					dataOffset = head.valueOffset;//
-					int2chars(dataOffset,(unsigned char*)indexOffset+1);//写入值偏移量
-					memset(indexOffset+5,0,4);//nextIndex = 0
-					//index area finish
-					
-					//data area begin
-					int2chars(index,(unsigned char*)valueArea);
-					valueArea += 4;
-				}	
-				break;
-				
+			void *valueArea = getValueArea(head,shmaddr,keyLen,valueLen,&index,0);
+			if (valueArea == NULL) {
+				rv = ERROR_GET_INDEX;
+				goto end;
+			} else {
+				int2chars(index,(unsigned char*)valueArea);
+				valueArea += 4;
+				memcpy(valueArea,key,keyLen);
+				valueArea += keyLen;
+				memcpy(valueArea,value,valueLen);
 			}
+			
+			
 		} else {
-			return ERROR_FULL_USED;
+			rv = ERROR_FULL_USED;
+			goto end;
 		}
+end:
+		if (rv != ERROR_GET_LOCK) {
+			sb.sem_num = 0;
+			sb.sem_op = 1;
+			sb.sem_flg = 0;
+			if (semop(semid,&sb,1) == -1) {
+				perror("sem release error:");
+			}
+		}
+		return rv;
 		
 	}
 	
