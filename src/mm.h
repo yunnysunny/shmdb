@@ -81,7 +81,7 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size);
 
 int mm_initChild(STHashShareHandle *handle);
 
-int mm_getInfo(STHashShareHandle *handle);
+int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head);
 
 int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	const char *value,unsigned short valueLen);

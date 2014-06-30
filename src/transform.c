@@ -1,7 +1,7 @@
 #include "transform.h"
 #include <stdio.h>
 
-int int2chars(int num,unsigned char* chars) {
+int int2chars(unsigned int num,unsigned char* chars) {
 	if (chars != NULL)
 	{
 		chars[0] = 	num>>24;
@@ -21,5 +21,18 @@ int chars2int(unsigned char* chars,unsigned int *num) {
 
 	*num = (a<<24) + (b<<16) + (c<<8) + d;
 
+	return 0;
+}
+
+int short2chars(unsigned  short num,unsigned char *chars) {
+	if (chars != NULL) {
+		chars[0] = num >> 8;
+		chars[1] = (num << 8) >> 8; 
+	}
+	return 0;
+}
+
+int chars2short(unsigned char *chars,unsigned  short *num) {
+	*num = chars[0]<<8 + chars[1];
 	return 0;
 }

@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/sem.h>
 #include <errno.h>
 
 #include "errcode.h"
@@ -41,10 +42,7 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size) {
 	unsigned int totalLen = size * 2;
 	unsigned int baseLen = size;
 	void *shm_addr;
-	char totalLenBytes[4] = {0};
-	char baseLenBytes[4] = {0};
-	char valueOffsetBytes[4] = {0};
-	char memLenBytes[4] = {0};
+
 	int id = 0;
 	int semid = 0;
 	
@@ -56,7 +54,7 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size) {
 	memLen += (valueOffset + space * MAX_LEN_OF_ELEMENT);
 	printf("the len wanna get:%d\n",memLen);
 	
-	if ((semid = semget(IPC_PRIVATE,1,IPC_CREATE | 0600)) < 0) {
+	if ((semid = semget(IPC_PRIVATE,1,IPC_CREAT | 0600)) < 0) {
 		perror("semget error:");
 		rv = errno;
 		return rv;
@@ -78,16 +76,14 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size) {
 	//memset(shm_addr+16,0,memLen-16);
 	
 	printf("to set header:\n");
-	int2chars(totalLen,totalLenBytes);
-	int2chars(baseLen,baseLenBytes);
-	memcpy(shm_addr,totalLenBytes,4);
-	memcpy(shm_addr+4,baseLenBytes,4);
+	int2chars(totalLen,(unsigned char*)shm_addr);
+	int2chars(baseLen,(unsigned char*)shm_addr+4);
+		
 	memset(shm_addr+8,0,4);//totalused
 	memset(shm_addr+12,0,4);//baseused
-	int2chars(valueOffset,valueOffsetBytes);
-	memset(shm_addr+16,valueOffsetBytes,4);//value offset
-	int2chars(memLen,memLenBytes);
-	memset(shm_addr+20,memLenBytes);
+	int2chars(valueOffset,(unsigned char*)shm_addr+16);//value offset
+	
+	int2chars(memLen,(unsigned char*)shm_addr+20);//memLen
 	
 	printf("set header finish:\n");
 	handle->shmid = id;
@@ -135,18 +131,18 @@ int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head) {
 		unsigned int valueOffset = 0;
 		unsigned int memLen = 0;
 		
-		chars2int((const char*)shmadd,&totalLen);
+		chars2int((unsigned char*)shmaddr,&totalLen);
 		head->totalLen = totalLen;
-		chars2int((const char*)(shmaddr+4),&baseLen);
+		chars2int((unsigned char*)(shmaddr+4),&baseLen);
 		head->baseLen = baseLen;
-		chars2int((const char*)(shmadd+8),&totalUsed);
+		chars2int((unsigned char*)(shmaddr+8),&totalUsed);
 		head->totalUsed = totalUsed;
-		chars2int((const char*)(shmadd+12),&baseUsed);
+		chars2int((unsigned char*)(shmaddr+12),&baseUsed);
 		head->baseUsed = baseUsed;
-		chars2int((const char*)(shmaddr+16),&valueOffset);
+		chars2int((unsigned char*)(shmaddr+16),&valueOffset);
 		head->valueOffset = valueOffset;
 		printf("the base len is %d\n",baseLen);
-		char2int((const char*)(shmaddr+20),&memLen);
+		char2int((unsigned char*)(shmaddr+20),&memLen);
 		head->memLen = memLen;
 	}
 	return 0;
@@ -163,19 +159,20 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 		void *indexOffset = shmaddr + SIZE_OF_ST_HASH_SHARE_MEM_HEAD + *index * SIZE_OF_ST_MEM_INDEX;
 		unsigned int dataOffset = 0;
 		void *valueArea = NULL;
+		unsigned char status = (unsigned char)(*indexOffset);
 		
 		
-		switch (*indexOffset) {
+		switch (status) {
 			case STATUS_DEL: {
 				unsigned short existValueLen = 0;
 				unsigned short existKeyLen = 0;
 				chars2int(indexOffset+1,&dataOffset);
 				valueArea = shmaddr + dataOffset;
-				chars2int((unsigned char*)valueArea+4,&existKeyLen);
-				chars2int((unsigned char*)valueArea+6,&existValueLen);
+				chars2short((unsigned char*)valueArea+4,&existKeyLen);///
+				chars2short((unsigned char*)valueArea+6,&existValueLen);///
 				if ((existKeyLen + existValueLen) <= (keyLen + valueLen)) {//find a index
 
-					*indexOffset = STATUS_INUSED;
+					*((unsigned char*)indexOffset) = STATUS_INUSED;
 					//int2chars(valueArea+4,keyLen);
 
 					int2chars(head->totalUsed+1, (unsigned char*)shmaddr+8);
@@ -221,18 +218,18 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 			break;
 			case STATUS_UNSED: {
 				
-				unsigned int newValueOffset = head.valueOffset + keyLen + valueLen;//the value offset will be used next 
+				unsigned int newValueOffset = head->valueOffset + keyLen + valueLen;//the value offset will be used next 
 				//head begin
-				int2chars(head.totalUsed+1,(unsigned char*)shmaddr+8);//increase totalUsed
+				int2chars(head->totalUsed+1,(unsigned char*)shmaddr+8);//increase totalUsed
 				
-				int2chars(head.baseUsed+1,(unsigned char*)shmaddr+12);//increase baseUsed
+				int2chars(head->baseUsed+1,(unsigned char*)shmaddr+12);//increase baseUsed
 									
 				int2Chars(newValueOffset,(unsigned char*)shmaddr+16);//set value offset which will be used next
 				
 				//head finish
 				//index area begin
-				*indexOffset = STATUS_INUSED;
-				dataOffset = head.valueOffset;//
+				*((unsigned char*)indexOffset) = STATUS_INUSED;
+				dataOffset = head->valueOffset;//
 				int2chars(dataOffset,(unsigned char*)indexOffset+1);//Ð´ÈëÖµÆ«ÒÆÁ¿
 				memset(indexOffset+5,0,4);//nextIndex = 0
 				//index area finish
@@ -240,7 +237,7 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 			}
 			break;
 			default:
-			printf("invalid status:%d\n",*indexOffset);
+			printf("invalid status:%d\n",*((unsigned char*)indexOffset));
 			return NULL;
 			break;
 		}
@@ -282,7 +279,7 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		time.tv_sec = 0;
 		time.tv_nsec = MAX_WAIT_WHEN_GET_LOCAK;
 		
-		if(semtimedop(handle->semid,&sb,1,&time)  == -1) {
+		if(semtimedop(handle->semid,&sb,1,(const struct timespec *)&time)  == -1) {
 			perror("semtimedop error:");
 			rv = ERROR_GET_LOCK;
 			goto end;
@@ -296,7 +293,7 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 			unsigned int index = getHashNum(key,strlen(key),head.baseLen);//get hash index number by the key string
 			void *shmaddr = (void *)handle->shmaddr;
 			//the MemIndex's offset in share memory
-			void *valueArea = getValueArea(head,shmaddr,keyLen,valueLen,&index,0);
+			void *valueArea = getValueArea(&head,shmaddr,keyLen,valueLen,&index,0);
 			if (valueArea == NULL) {
 				rv = ERROR_GET_INDEX;
 				goto end;

@@ -5,9 +5,13 @@
 extern "C" {
 #endif
 
-int int2chars(int num,unsigned char* chars) ;
+int int2chars(unsigned int num,unsigned char* chars) ;
 
 int chars2int(unsigned char* chars,unsigned int *num);
+
+int short2chars(unsigned  short num,unsigned char *chars);
+
+int chars2short(unsigned char *chars,unsigned  short *num)
 
 #ifdef __cplusplus
 }
