@@ -1,0 +1,39 @@
+compiling...
+gcc -Wall -Wextra -c -g -o mm.o src/mm.c 
+src/mm.c: In function ¡®chars2short¡¯:
+src/mm.c:18:54: error: expected ¡®=¡¯, ¡®,¡¯, ¡®;¡¯, ¡®asm¡¯ or ¡®__attribute__¡¯ before ¡®{¡¯ token
+ static unsigned int getRealMapLen(unsigned int size) {
+                                                      ^
+src/mm.c:39:64: error: expected ¡®=¡¯, ¡®,¡¯, ¡®;¡¯, ¡®asm¡¯ or ¡®__attribute__¡¯ before ¡®{¡¯ token
+ int mm_initParent(STHashShareHandle *handle,unsigned int size) {
+                                                                ^
+src/mm.c:101:45: error: expected ¡®=¡¯, ¡®,¡¯, ¡®;¡¯, ¡®asm¡¯ or ¡®__attribute__¡¯ before ¡®{¡¯ token
+ int mm_initChild(STHashShareHandle *handle) {
+                                             ^
+src/mm.c:120:69: error: expected ¡®=¡¯, ¡®,¡¯, ¡®;¡¯, ¡®asm¡¯ or ¡®__attribute__¡¯ before ¡®{¡¯ token
+ int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head) {
+                                                                     ^
+src/mm.c:154:46: error: expected ¡®=¡¯, ¡®,¡¯, ¡®;¡¯, ¡®asm¡¯ or ¡®__attribute__¡¯ before ¡®{¡¯ token
+  unsigned int *index,unsigned int lastIndex) {
+                                              ^
+src/mm.c:252:45: error: expected ¡®=¡¯, ¡®,¡¯, ¡®;¡¯, ¡®asm¡¯ or ¡®__attribute__¡¯ before ¡®{¡¯ token
+  const char *value,unsigned short valueLen) {
+                                             ^
+src/mm.c:331:12: error: expected ¡®=¡¯, ¡®,¡¯, ¡®;¡¯, ¡®asm¡¯ or ¡®__attribute__¡¯ before ¡®{¡¯ token
+ int main() {
+            ^
+src/mm.c:364:1: error: expected ¡®{¡¯ at end of input
+ }
+ ^
+In file included from src/mm.c:14:0:
+src/transform.h:14:32: warning: unused parameter ¡®chars¡¯ [-Wunused-parameter]
+ int chars2short(unsigned char *chars,unsigned  short *num)
+                                ^
+src/transform.h:14:55: warning: unused parameter ¡®num¡¯ [-Wunused-parameter]
+ int chars2short(unsigned char *chars,unsigned  short *num)
+                                                       ^
+src/mm.c:364:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+Makefile:15: recipe for target `mm.o' failed
+make: *** [mm.o] Error 1

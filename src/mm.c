@@ -13,9 +13,10 @@
 #include "hash.h"
 #include "transform.h"
 
-#define BUFFER_SIZE 2048
+//#define BUFFER_SIZE 2048
 
-static unsigned int getRealMapLen(unsigned int size) {
+static unsigned int getRealMapLen(unsigned int size)
+{
 	unsigned int len = 0,space = 0;
 	unsigned int maxPrime = getMaxPrime(size);
 	space = (maxPrime * 2);
@@ -36,7 +37,8 @@ static unsigned int getRealMapLen(unsigned int size) {
  * 
  * initialize the share memory and semaphore in parent process.
  */
-int mm_initParent(STHashShareHandle *handle,unsigned int size) {
+int mm_initParent(STHashShareHandle *handle,unsigned int size)
+{
 	int rv;	
 	
 	unsigned int totalLen = size * 2;
@@ -98,7 +100,8 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size) {
  * repeat the calling of shmat to let child process attach to the share memory.
  *
  */
-int mm_initChild(STHashShareHandle *handle) {
+int mm_initChild(STHashShareHandle *handle)
+{
 	if (handle == NULL) {
 		printf("the handle is null\n");
 		return ERROR_SHM_NOT_INIT;
@@ -117,7 +120,8 @@ int mm_initChild(STHashShareHandle *handle) {
 /**
  * get the hashtable's head
  */
-int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head) {
+int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
+{
 	if (handle == NULL) {
 		printf("the handle is null\n");
 		return ERROR_SHM_NOT_INIT;
@@ -142,7 +146,7 @@ int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head) {
 		chars2int((unsigned char*)(shmaddr+16),&valueOffset);
 		head->valueOffset = valueOffset;
 		printf("the base len is %d\n",baseLen);
-		char2int((unsigned char*)(shmaddr+20),&memLen);
+		chars2int((unsigned char*)(shmaddr+20),&memLen);
 		head->memLen = memLen;
 	}
 	return 0;
@@ -151,7 +155,8 @@ int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head) {
 
 static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 	unsigned short keyLen, unsigned short valueLen,
-	unsigned int *index,unsigned int lastIndex) {
+	unsigned int *index,unsigned int lastIndex)
+{
 	if (*index >= head->totalLen) {
 		return NULL;
 	}
@@ -159,7 +164,7 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 		void *indexOffset = shmaddr + SIZE_OF_ST_HASH_SHARE_MEM_HEAD + *index * SIZE_OF_ST_MEM_INDEX;
 		unsigned int dataOffset = 0;
 		void *valueArea = NULL;
-		unsigned char status = (unsigned char)(*indexOffset);
+		unsigned char status = *((unsigned char*)indexOffset);
 		
 		
 		switch (status) {
@@ -224,13 +229,13 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 				
 				int2chars(head->baseUsed+1,(unsigned char*)shmaddr+12);//increase baseUsed
 									
-				int2Chars(newValueOffset,(unsigned char*)shmaddr+16);//set value offset which will be used next
+				int2chars(newValueOffset,(unsigned char*)shmaddr+16);//set value offset which will be used next
 				
 				//head finish
 				//index area begin
 				*((unsigned char*)indexOffset) = STATUS_INUSED;
 				dataOffset = head->valueOffset;//
-				int2chars(dataOffset,(unsigned char*)indexOffset+1);//Ð´ÈëÖµÆ«ÒÆÁ¿
+				int2chars(dataOffset,(unsigned char*)indexOffset+1);//å†™å…¥å€¼åç§»é‡
 				memset(indexOffset+5,0,4);//nextIndex = 0
 				//index area finish
 				return 	shmaddr+newValueOffset;
@@ -249,7 +254,8 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
  * 
  */
 int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
-	const char *value,unsigned short valueLen) {
+	const char *value,unsigned short valueLen)
+{
 	if (keyLen > MAX_LEN_OF_KEY) {
 		return ERROR_TOO_LONG_KEY;
 	}
@@ -315,25 +321,24 @@ end:
 			sb.sem_num = 0;
 			sb.sem_op = 1;
 			sb.sem_flg = 0;
-			if (semop(semid,&sb,1) == -1) {
+			if (semop(handle->semid,&sb,1) == -1) {
 				perror("sem release error:");
 			}
 		}
 		return rv;
 		
-	}
-	
-	
+	}	
 	
 }
 
 
-int main() {
+int main()
+{
 	STHashShareHandle handle;
 	int rv = mm_initParent(&handle,60);
 	printf("Created shared memory status:\n");
 	
-    system("ipcs -m");
+        system("ipcs -m");
 	if (rv == 0) {
 		int pid = 0;
 		printf("return shmid:%d\n",handle.shmid);
@@ -353,12 +358,6 @@ int main() {
 			}
 		}
 	}
-	/*  if (rv == 0) {
-		char buffer[128] = {0};
-		printf("delete the get shm\n");
-		sprintf(buffer,"ipcrm -m %d",shmid);
-		printf("%s\n",buffer);
-		system(buffer);
-		system("ipcs -m");
-	}  */
+	return 0;
 }
+
