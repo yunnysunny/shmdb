@@ -60,7 +60,10 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size)
 		perror("semget error:");
 		rv = errno;
 		return rv;
-	}
+	} else {                
+                semctl(semid, 0, SETVAL, 1); //初始化信号量为1
+        }
+	printf("get semid:%d\n",semid);
 	
 	if ((id=shmget(IPC_PRIVATE,memLen,0600))<0) {
 		perror("shmget error");
@@ -187,6 +190,7 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 					} else {//lastIndex is in base area
 						int2chars(head->baseUsed+12,(unsigned char*)shmaddr+1);						
 					}
+                                        memset(valueArea,0,existKeyLen + existValueLen);
 					return valueArea;
 					//break;
 				} else {// to test the next index in the zipper area
@@ -284,8 +288,10 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		sb.sem_flg = SEM_UNDO;
 		time.tv_sec = 0;
 		time.tv_nsec = MAX_WAIT_WHEN_GET_LOCAK;
+		printf("semid : %d\n",handle->semid);
 		
-		if(semtimedop(handle->semid,&sb,1,(const struct timespec *)&time)  == -1) {
+		//if(semtimedop(handle->semid,&sb,1,(const struct timespec *)&time)  == -1) {
+		if (semop(handle->semid,&sb,1) == -1) {
 			perror("semtimedop error:");
 			rv = ERROR_GET_LOCK;
 			goto end;
@@ -353,9 +359,18 @@ int main()
 			system("ipcs -m");
 			rvc = mm_initChild(&childHandle);
 			if (rvc == 0) {
+                            const char *key = "key";
+                            unsigned short keyLen = (unsigned short)(sizeof(key));
+                            const char *value = "value";
+                            unsigned short valueLen = (unsigned short)(sizeof(value));
 				printf("init child success\n");
 				mm_getInfo(&childHandle,NULL);
+                                rvc = mm_put(&childHandle,key,keyLen,value,valueLen);
+				printf("the result of mm_put:%x\n",rvc);
 			}
+		} else {
+			int status;
+			wait(&status);
 		}
 	}
 	return 0;
