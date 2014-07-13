@@ -19,6 +19,12 @@ extern "C" {
 #define ERROR_NOT_ENOUGH						(ERROR_SHM_BASE + 10)
 #define ERROR_GET_INDEX							(ERROR_SHM_BASE + 11)
 
+#define ERROR_MALLOC_MEMORY						(ERROR_SHM_BASE + 12)
+#define ERROR_NULL_MEMDATA						(ERROR_SHM_BASE + 13)
+#define ERROR_NOT_FOUND_INDEX					(ERROR_SHM_BASE + 14)
+
+#define ERROR_PATH_NULL							(ERROR_SHM_BASE + 15)
+#define ERROR_FOPEN_ERROR						(ERROR_SHM_BASE + 16)
 #ifdef __cplusplus 
 } 
 #endif 

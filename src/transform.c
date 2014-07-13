@@ -33,6 +33,8 @@ int short2chars(unsigned  short num,unsigned char *chars) {
 }
 
 int chars2short(unsigned char *chars,unsigned  short *num) {
-	*num = chars[0]<<8 + chars[1];
+	unsigned short a = chars[0];
+	unsigned short b = chars[1];
+	*num = (a<<8) + b;
 	return 0;
 }

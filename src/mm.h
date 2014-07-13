@@ -39,6 +39,8 @@ typedef struct MemData {
 * the head of the hashmap.
 * the hashmap's index area is divided into two part :
 * the base area and the zipper area.
+* the value of base area is smaller than baseLen,while 
+* the value of zipper area is bigger than baseLen.
 */
 typedef struct HashShareMemHead {
 	unsigned int totalLen;
@@ -47,7 +49,7 @@ typedef struct HashShareMemHead {
 	unsigned int totalUsed;
 	unsigned int baseUsed;
 	/** the current offset of MemData which is unused.
-	the value of it is cacluated form the beginning of the base area of index.  */
+	the value of it is cacluated form the beginning of the share memory.  */
 	unsigned int valueOffset;
 	unsigned int memLen;
 }STHashShareMemHead;
@@ -91,7 +93,7 @@ int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 
 int mm_delete(STHashShareHandle *handle,const char *key);
 
-
+int mm_dump(STHashShareHandle *handle,STHashShareMemHead *head,char *path);
 
 #ifdef __cplusplus 
 } 
