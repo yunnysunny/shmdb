@@ -89,11 +89,11 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	const char *value,unsigned short valueLen);
 
 int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
-	char *value,unsigned short *valueLen);
+	char **value,unsigned short *valueLen);
 
 int mm_delete(STHashShareHandle *handle,const char *key);
 
-int mm_dump(STHashShareHandle *handle,STHashShareMemHead *head,char *path);
+int mm_dump(STHashShareHandle *handle,char *path);
 
 #ifdef __cplusplus 
 } 

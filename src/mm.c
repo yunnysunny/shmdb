@@ -229,7 +229,7 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 			break;
 			case STATUS_UNSED: {
 				
-				unsigned int newValueOffset = head->valueOffset + keyLen + valueLen;//the value offset will be used next 
+				unsigned int newValueOffset = head->valueOffset + 4 + 2 + keyLen + 2 + valueLen;//the value offset will be used next 
 				//head begin
 				int2chars(head->totalUsed+1,(unsigned char*)shmaddr+8);//increase totalUsed
 				
@@ -244,7 +244,7 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 				int2chars(dataOffset,(unsigned char*)indexOffset+1);//写入值偏移量
 				memset(indexOffset+5,0,4);//nextIndex = 0
 				//index area finish
-				return 	shmaddr+newValueOffset;
+				return 	shmaddr+dataOffset;
 			}
 			break;
 			default:
@@ -309,7 +309,7 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 			//the MemIndex's offset in share memory
 			void *valueArea = getValueArea(&head,shmaddr,keyLen,valueLen,&index,0);
 			
-			printf("the index wanna put:%d\n",index);//
+			printf("the index wanna put:%d,dataoffset:0x%x\n",index,(valueArea-shmaddr));//
 			if (valueArea == NULL) {
 				rv = ERROR_GET_INDEX;
 				goto end;
@@ -404,7 +404,7 @@ static int getIndex(void *shmaddr,
 }
 
 int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
-	char *value,unsigned short *valueLen) {
+	char **value,unsigned short *valueLen) {
 	STHashShareMemHead head;
 	struct sembuf sb;
 	struct timespec time;
@@ -433,18 +433,18 @@ int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		mm_getInfo(handle,&head);
 		index = getHashNum(key,keyLen,head.baseLen);
 		printf("get the index:%d\n",index);
-		mm_dump(handle,&head,"/tmp/dump.data");
+		
 		rv = getIndex(shmaddr,key,keyLen,index,&valueAreaData);
 		if (rv == 0) {
-			
-			value = (char *)malloc(sizeof(char)*(valueAreaData.valueLen+1));
+			printf("get value Length:%d\n",valueAreaData.valueLen);
+			*value = (char *)malloc(sizeof(char)*(valueAreaData.valueLen+1));
 			if (value == NULL) {
 				rv = ERROR_MALLOC_MEMORY;
 				goto end;
 			}
-			memset(value,0,valueAreaData.valueLen+1);
-			memcpy(value,valueAreaData.pValue,valueAreaData.valueLen);
-			
+			memset(*value,0,valueAreaData.valueLen+1);
+			memcpy(*value,valueAreaData.pValue,valueAreaData.valueLen);
+
 		}
 	}
 
@@ -464,17 +464,19 @@ end:
 /**
 * @notProcessSafe
 */
-int mm_dump(STHashShareHandle *handle,STHashShareMemHead *head,char *path) {
+int mm_dump(STHashShareHandle *handle,char *path) {
 	int rv = 0;
 	if (path == NULL) {
 		return ERROR_PATH_NULL;
 	} else {
 		FILE *fp = NULL;
+		STHashShareMemHead head;
 		if ((fp = fopen(path,"wb")) == NULL) {
 			return ERROR_FOPEN_ERROR;
 		} else {
 			void *shmaddr = (void *)handle->shmaddr;
-			fwrite(shmaddr,sizeof(char),head->memLen,fp);
+			mm_getInfo(handle,&head);
+			fwrite(shmaddr,sizeof(char),head.memLen,fp);
 		}
 		
 	}
@@ -515,9 +517,11 @@ int main()
 				if (rvc == 0) {
 					char *getValue = NULL;
 					unsigned short getValueLen = 0;
-					rvc = mm_get(&childHandle,key,keyLen,getValue,&getValueLen);
+					mm_dump(&childHandle,"/tmp/dump.data");
+					rvc = mm_get(&childHandle,key,keyLen,&getValue,&getValueLen);
 					printf("the result of mm_get:%x\n",rvc);
 					if (rvc == 0) {
+						printf("point getValue:0x%x\n",getValue);
 						if (getValue != NULL) {
 							printf("the value is %s\n",getValue);
 							free(getValue);
