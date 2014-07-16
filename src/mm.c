@@ -444,7 +444,7 @@ int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 			}
 			memset(*value,0,valueAreaData.valueLen+1);
 			memcpy(*value,valueAreaData.pValue,valueAreaData.valueLen);
-
+			*valueLen = valueAreaData.valueLen;
 		}
 	}
 
@@ -506,9 +506,9 @@ int main()
 			rvc = mm_initChild(&childHandle);
 			if (rvc == 0) {
 				const char *key = "key";
-				unsigned short keyLen = (unsigned short)(sizeof(key));
+				unsigned short keyLen = (unsigned short)(strlen(key));
 				const char *value = "value";
-				unsigned short valueLen = (unsigned short)(sizeof(value));
+				unsigned short valueLen = (unsigned short)(strlen(value));
 				printf("init child success\n");
 				mm_getInfo(&childHandle,NULL);
                 rvc = mm_put(&childHandle,key,keyLen,value,valueLen);
@@ -521,7 +521,7 @@ int main()
 					rvc = mm_get(&childHandle,key,keyLen,&getValue,&getValueLen);
 					printf("the result of mm_get:%x\n",rvc);
 					if (rvc == 0) {
-						printf("point getValue:0x%x\n",getValue);
+						printf("point getValue:0x%x\n getValueLen:%d\n",getValue,getValueLen);
 						if (getValue != NULL) {
 							printf("the value is %s\n",getValue);
 							free(getValue);
