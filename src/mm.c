@@ -157,9 +157,11 @@ int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 	return 0;
 	
 }
-
+/**
+* give the offset of value area when put a new data in mm.
+*/
 static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
-	unsigned short keyLen, unsigned short valueLen,
+	char *key,unsigned short keyLen, unsigned short valueLen,
 	unsigned int *index,unsigned int lastIndex)
 {
 	if (*index >= head->totalLen) {
@@ -179,52 +181,77 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 				chars2int((unsigned char*)indexOffset+1,&dataOffset);
 				valueArea = shmaddr + dataOffset;
 				chars2short((unsigned char*)valueArea+4,&existKeyLen);///
-				chars2short((unsigned char*)valueArea+6,&existValueLen);///
+				chars2short((unsigned char*)valueArea+6+existKeyLen,&existValueLen);///
 				if ((existKeyLen + existValueLen) <= (keyLen + valueLen)) {//find a index
 
 					*((unsigned char*)indexOffset) = STATUS_INUSED;
 					//int2chars(valueArea+4,keyLen);
-
+					
 					int2chars(head->totalUsed+1, (unsigned char*)shmaddr+8);
 					
-					if (lastIndex > head->baseLen) {//lastIndex is in zipper area
+					if (index > head->baseLen) {//the current index is in zipper area
 						
-					} else {//lastIndex is in base area
+					} else {//this current index is in base area
 						int2chars(head->baseUsed+12,(unsigned char*)shmaddr+1);						
 					}
                     memset(valueArea,0,existKeyLen + existValueLen);
 					return valueArea;
 					//break;
-				} else {// to test the next index in the zipper area
-					unsigned int existIndex = 0;
+				} else {
+					
+
+					unsigned int existIndex = 0;// to test the next index in the zipper area
 					chars2int(((unsigned char*)indexOffset+5), &existIndex);
 					if (existIndex > 0) {
 						lastIndex = *index;
 						*index = existIndex;
 						
-						return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
+						return getValueArea(head,shmaddr,key,keyLen,valueLen,index,lastIndex);
 					} else {
 						lastIndex = *index;
 						*index = head->baseLen + (head->totalUsed-head->baseUsed);
-						return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
+						int2chars(*index,indexOffset+5);
+						return getValueArea(head,shmaddr,key,keyLen,valueLen,index,lastIndex);
 					}
+				
+					
 					
 				}
 			}
 			break;
-			case STATUS_INUSED: {// to test the next index in the zipper area
-				unsigned int existIndex = 0;
-				chars2int(((unsigned char*)indexOffset+5), &existIndex);
-				if (existIndex > 0) {
-					lastIndex = *index;
-					*index = existIndex;
-					
-					return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
-				} else {
-					lastIndex = *index;
-					*index = head->baseLen + (head->totalUsed-head->baseUsed);
-					return getValueArea(head,shmaddr,keyLen,valueLen,index,lastIndex);
+			case STATUS_INUSED: {
+				unsigned short existValueLen = 0;
+				unsigned short existKeyLen = 0;
+				chars2int((unsigned char*)indexOffset+1,&dataOffset);
+				valueArea = shmaddr + dataOffset;
+				chars2short((unsigned char*)valueArea+4,&existKeyLen);///
+				chars2short((unsigned char*)valueArea+6+existKeyLen,&existValueLen);///
+				if (existKeyLen == keyLen
+					&& strncmp(valueArea+6,key,existKeyLen) == 0) {//
+					if (existValueLen >= valueLen) {
+						return valueArea;
+					} else {
+						*((unsigned char*)indexOffset) = STATUS_DEL;//
+					}
 				}
+				{// to test the next index in the zipper area
+					unsigned int existIndex = 0;
+				
+					// to test the next index in the zipper area
+					chars2int(((unsigned char*)indexOffset+5), &existIndex);
+					if (existIndex > 0) {
+						lastIndex = *index;
+						*index = existIndex;
+						
+						return getValueArea(head,shmaddr,key,keyLen,valueLen,index,lastIndex);
+					} else {
+						lastIndex = *index;
+						*index = head->baseLen + (head->totalUsed-head->baseUsed);
+						int2chars(*index,indexOffset+5);
+						return getValueArea(head,shmaddr,key,keyLen,valueLen,index,lastIndex);
+					}
+				}
+				
 			}
 			break;
 			case STATUS_UNSED: {
@@ -307,7 +334,7 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 			unsigned int index = getHashNum(key,keyLen,head.baseLen);//get hash index number by the key string
 			void *shmaddr = (void *)handle->shmaddr;
 			//the MemIndex's offset in share memory
-			void *valueArea = getValueArea(&head,shmaddr,keyLen,valueLen,&index,0);
+			void *valueArea = getValueArea(&head,shmaddr,key,keyLen,valueLen,&index,0);
 			
 			printf("the index wanna put:%d,dataoffset:0x%x\n",index,(valueArea-shmaddr));//
 			if (valueArea == NULL) {
@@ -345,7 +372,9 @@ end:
 	}	
 	
 }
-
+/**
+* search the position of the index when get data
+*/
 static int getIndex(void *shmaddr,
 	const char *key,unsigned short keyLen,unsigned int index,STValueAreaData *stValueAreaData) {
 	//
@@ -388,7 +417,7 @@ static int getIndex(void *shmaddr,
 		}		
 		break;
 		case STATUS_DEL: {
-			chars2int((unsigned char*)valueArea+5,&index);
+			chars2int((unsigned char*)indexOffset+5,&index);
 			if (index == 0) {
 				return ERROR_NOT_FOUND_INDEX;
 			} else {
@@ -525,8 +554,29 @@ int main()
 						if (getValue != NULL) {
 							printf("the value is %s\n",getValue);
 							free(getValue);
+							getValue = NULL;
 						} else {
 							
+						}
+						{
+							char *svalue = "this is new value";
+							
+							rvc = mm_put(&childHandle,key,keyLen,svalue,(unsigned short)strlen(svalue));
+							if (rvc > 0) {
+								printf("mm_put second error:%x\n",rvc);
+								return rvc;
+							}
+							printf("mm_put second success\n");
+							mm_dump(&childHandle,"/tmp/dump2.data");
+							rvc = mm_get(&childHandle,key,keyLen,&getValue,&getValueLen);
+							if (rvc > 0) {
+								printf("mm_get second error:%x\n",rvc);
+								return rvc;
+							}
+							printf("mm_get second success\n");
+							if (getValue != NULL) {
+								printf("the second value is :%s\n",getValue);
+							}
 						}
 						
 						
