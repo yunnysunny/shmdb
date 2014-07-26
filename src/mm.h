@@ -95,6 +95,8 @@ int mm_delete(STHashShareHandle *handle,const char *key);
 
 int mm_dump(STHashShareHandle *handle,char *path);
 
+int mm_destory(STHashShareHandle *handle);
+
 #ifdef __cplusplus 
 } 
 #endif 
