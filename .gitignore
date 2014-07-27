@@ -28,3 +28,5 @@
 *.dump
 
 /src/*.a
+
+/test/appexp
