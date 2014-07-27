@@ -25,6 +25,8 @@ extern "C" {
 
 #define ERROR_PATH_NULL							(ERROR_SHM_BASE + 15)
 #define ERROR_FOPEN_ERROR						(ERROR_SHM_BASE + 16)
+
+#define ERROR_DESTORY_SHM						(ERROR_SHM_BASE + 17)
 #ifdef __cplusplus 
 } 
 #endif 

@@ -1,5 +1,5 @@
-#ifndef _MM_H
-#define _MM_H
+#ifndef _shmdb_H
+#define _shmdb_H
 
 #ifdef __cplusplus 
 extern "C" { 
@@ -79,23 +79,23 @@ typedef struct HashShareHandle {
 
 #define MAX_WAIT_WHEN_GET_LOCAK			100*1000*1000
 
-int mm_initParent(STHashShareHandle *handle,unsigned int size);
+int shmdb_initParent(STHashShareHandle *handle,unsigned int size);
 
-int mm_initChild(STHashShareHandle *handle);
+int shmdb_initChild(STHashShareHandle *handle);
 
-int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head);
+int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head);
 
-int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
+int shmdb_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	const char *value,unsigned short valueLen);
 
-int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
+int shmdb_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	char **value,unsigned short *valueLen);
 
-int mm_delete(STHashShareHandle *handle,const char *key);
+int shmdb_delete(STHashShareHandle *handle,const char *key);
 
-int mm_dump(STHashShareHandle *handle,char *path);
+int shmdb_dump(STHashShareHandle *handle,char *path);
 
-int mm_destory(STHashShareHandle *handle);
+int shmdb_destory(STHashShareHandle *handle);
 
 #ifdef __cplusplus 
 } 

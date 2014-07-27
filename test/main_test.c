@@ -6,7 +6,7 @@
 int main()
 {
 	STHashShareHandle handle;
-	int rv = mm_initParent(&handle,60);
+	int rv = shmdb_initParent(&handle,60);
 	printf("Created shared memory status:\n");
 	
     system("ipcs -m");
@@ -22,23 +22,23 @@ int main()
 			childHandle.shmid = handle.shmid;
 			childHandle.semid = handle.semid;
 			system("ipcs -m");
-			rvc = mm_initChild(&childHandle);
+			rvc = shmdb_initChild(&childHandle);
 			if (rvc == 0) {
 				const char *key = "key";
 				unsigned short keyLen = (unsigned short)(strlen(key));
 				const char *value = "value";
 				unsigned short valueLen = (unsigned short)(strlen(value));
 				printf("init child success\n");
-				mm_getInfo(&childHandle,NULL);
-                rvc = mm_put(&childHandle,key,keyLen,value,valueLen);
+				shmdb_getInfo(&childHandle,NULL);
+                rvc = shmdb_put(&childHandle,key,keyLen,value,valueLen);
 				
-				printf("the result of mm_put:%x\n",rvc);
+				printf("the result of shmdb_put:%x\n",rvc);
 				if (rvc == 0) {
 					char *getValue = NULL;
 					unsigned short getValueLen = 0;
-					mm_dump(&childHandle,"/tmp/dump.data");
-					rvc = mm_get(&childHandle,key,keyLen,&getValue,&getValueLen);
-					printf("the result of mm_get:%x\n",rvc);
+					shmdb_dump(&childHandle,"/tmp/dump.data");
+					rvc = shmdb_get(&childHandle,key,keyLen,&getValue,&getValueLen);
+					printf("the result of shmdb_get:%x\n",rvc);
 					if (rvc == 0) {
 						printf("point getValue:0x%x\n getValueLen:%d\n",getValue,getValueLen);
 						if (getValue != NULL) {
@@ -51,19 +51,19 @@ int main()
 						{
 							char *svalue = "this is new value";
 							
-							rvc = mm_put(&childHandle,key,keyLen,svalue,(unsigned short)strlen(svalue));
+							rvc = shmdb_put(&childHandle,key,keyLen,svalue,(unsigned short)strlen(svalue));
 							if (rvc > 0) {
-								printf("mm_put second error:%x\n",rvc);
+								printf("shmdb_put second error:%x\n",rvc);
 								return rvc;
 							}
-							printf("mm_put second success\n");
-							mm_dump(&childHandle,"/tmp/dump2.data");
-							rvc = mm_get(&childHandle,key,keyLen,&getValue,&getValueLen);
+							printf("shmdb_put second success\n");
+							shmdb_dump(&childHandle,"/tmp/dump2.data");
+							rvc = shmdb_get(&childHandle,key,keyLen,&getValue,&getValueLen);
 							if (rvc > 0) {
-								printf("mm_get second error:%x\n",rvc);
+								printf("shmdb_get second error:%x\n",rvc);
 								return rvc;
 							}
-							printf("mm_get second success\n");
+							printf("shmdb_get second success\n");
 							if (getValue != NULL) {
 								printf("the second value is :%s\n",getValue);
 							}
@@ -76,6 +76,10 @@ int main()
 		} else {
 			int status;
 			wait(&status);
+			/* while(1) {
+				sleep(1);
+			} */
+			shmdb_destory(&handle);
 		}
 	}
 	return 0;

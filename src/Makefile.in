@@ -121,11 +121,11 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libexp_a_AR = $(AR) $(ARFLAGS)
-libexp_a_LIBADD =
-am_libexp_a_OBJECTS = mm.$(OBJEXT) hash.$(OBJEXT) prime.$(OBJEXT) \
+libshmdb_a_AR = $(AR) $(ARFLAGS)
+libshmdb_a_LIBADD =
+am_libshmdb_a_OBJECTS = mm.$(OBJEXT) hash.$(OBJEXT) prime.$(OBJEXT) \
 	transform.$(OBJEXT)
-libexp_a_OBJECTS = $(am_libexp_a_OBJECTS)
+libshmdb_a_OBJECTS = $(am_libshmdb_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -154,8 +154,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libexp_a_SOURCES)
-DIST_SOURCES = $(libexp_a_SOURCES)
+SOURCES = $(libshmdb_a_SOURCES)
+DIST_SOURCES = $(libshmdb_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -266,8 +266,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-lib_LIBRARIES = libexp.a
-libexp_a_SOURCES = mm.c hash.c prime.c transform.c
+lib_LIBRARIES = libshmdb.a
+libshmdb_a_SOURCES = mm.c hash.c prime.c transform.c
 all: all-am
 
 .SUFFIXES:
@@ -334,10 +334,10 @@ uninstall-libLIBRARIES:
 clean-libLIBRARIES:
 	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
 
-libexp.a: $(libexp_a_OBJECTS) $(libexp_a_DEPENDENCIES) $(EXTRA_libexp_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libexp.a
-	$(AM_V_AR)$(libexp_a_AR) libexp.a $(libexp_a_OBJECTS) $(libexp_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libexp.a
+libshmdb.a: $(libshmdb_a_OBJECTS) $(libshmdb_a_DEPENDENCIES) $(EXTRA_libshmdb_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libshmdb.a
+	$(AM_V_AR)$(libshmdb_a_AR) libshmdb.a $(libshmdb_a_OBJECTS) $(libshmdb_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libshmdb.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

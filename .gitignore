@@ -3,7 +3,6 @@
 
 /*.dep
 
-/*.o
 /nbproject
 /appexp
 
@@ -25,3 +24,7 @@
 /bak
 
 /src/.deps
+*.o
+*.dump
+
+/src/*.a

@@ -7,6 +7,12 @@
 #include <sys/sem.h>
 #include <errno.h>
 
+#include <signal.h>
+#include <execinfo.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "errcode.h"
 #include "mm.h"
 #include "prime.h"
@@ -24,6 +30,57 @@ typedef struct ValueAreaData {
 
 #define LEN_GLOBAL_ERROR_MSG 256
 static char globalErrorMsg[LEN_GLOBAL_ERROR_MSG] = {0};
+static STHashShareHandle *handleBackup = NULL;
+
+static void print_reason(int sig, siginfo_t * info, void *secret)
+{
+	printf("get a single [%d]\n",sig);
+	switch(sig) {
+		case SIGSEGV:
+		case SIGFPE:
+		case SIGILL:
+		case SIGBUS:
+		case SIGABRT:
+		case SIGSYS: {
+		void *array[10];
+		size_t size;
+#ifdef PRINT_DEBUG
+		char **strings;
+		size_t i;
+		size = backtrace(array, 10);
+		strings = backtrace_symbols(array, size);
+		printf("Obtained %zd stack frames.\n", size);
+		for (i = 0; i < size; i++)
+		printf("%s\n", strings[i]);
+		free(strings);
+#else
+		int fd = open("err.log", "w+");
+		size = backtrace(array, 10);
+		backtrace_symbols_fd(array, size, fd);
+		close(fd);
+#endif
+		shmdb_dump(handleBackup,"crash.dump");
+		shmdb_destory(handleBackup);
+		exit(-1);
+		}
+		break;
+		case SIGINT:
+		case SIGKILL: {
+			printf("normal exit\n");
+			shmdb_destory(handleBackup);
+			exit(0);
+		}
+		break;
+		case SIGUSR1: {
+			shmdb_dump(handleBackup,"normal.dump");
+		}
+		break;
+		default:
+		break;
+	}
+	
+}
+
 /**
  * the format of one share memory hashmap:
  * HashShareMemHead|MemIndex|MemData
@@ -38,7 +95,7 @@ static char globalErrorMsg[LEN_GLOBAL_ERROR_MSG] = {0};
  * 
  * initialize the share memory and semaphore in parent process.
  */
-int mm_initParent(STHashShareHandle *handle,unsigned int size)
+int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 {
 	int rv;	
 	
@@ -98,6 +155,28 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size)
 	handle->shmaddr = (long)shm_addr;
 	printf("the shmid is %d\n",id);
 	rv = 0;
+	handleBackup = handle;
+	{
+		struct sigaction myAction;
+		myAction.sa_sigaction = print_reason;
+		sigemptyset(&myAction.sa_mask);
+		myAction.sa_flags = SA_RESTART | SA_SIGINFO;
+		sigaction(SIGSEGV, &myAction, NULL);
+		sigaction(SIGFPE, &myAction, NULL);
+		sigaction(SIGILL, &myAction, NULL);
+		sigaction(SIGBUS, &myAction, NULL);
+		sigaction(SIGABRT, &myAction, NULL);
+		sigaction(SIGSYS, &myAction, NULL);
+		
+		sigaction(SIGINT, &myAction, NULL);
+		sigaction(SIGKILL, &myAction, NULL);
+		sigaction(SIGTERM, &myAction, NULL);
+		sigaction(SIGHUP, &myAction, NULL);
+		sigaction(SIGSTOP, &myAction, NULL);
+		
+		sigaction(SIGUSR1, &myAction, NULL);
+		
+	}
 	return rv;
 }
 /**
@@ -105,9 +184,9 @@ int mm_initParent(STHashShareHandle *handle,unsigned int size)
  * repeat the calling of shmat to let child process attach to the share memory.
  *
  */
-int mm_initChild(STHashShareHandle *handle)
+int shmdb_initChild(STHashShareHandle *handle)
 {
-	if (handle == NULL) {
+	if (handle == NULL || handle->shmid == 0) {
 		printf("the handle is null\n");
 		return ERROR_SHM_NOT_INIT;
 	} else {
@@ -125,9 +204,9 @@ int mm_initChild(STHashShareHandle *handle)
 /**
  * get the hashtable's head
  */
-int mm_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
+int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 {
-	if (handle == NULL) {
+	if (handle == NULL || handle->shmid == 0) {
 		printf("the handle is null\n");
 		return ERROR_SHM_NOT_INIT;
 	} else if (head != NULL){
@@ -286,9 +365,12 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
  * put the value into hashtable.
  * 
  */
-int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
+int shmdb_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	const char *value,unsigned short valueLen)
 {
+	if (handle == NULL || handle->shmid == 0) {		
+		return ERROR_SHM_NOT_INIT;
+	}
 	if (keyLen > MAX_LEN_OF_KEY) {
 		return ERROR_TOO_LONG_KEY;
 	}
@@ -325,7 +407,7 @@ int mm_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 			rv = ERROR_GET_LOCK;
 			goto end;
 		}
-		mm_getInfo(handle,&head);
+		shmdb_getInfo(handle,&head);
 		if (head.valueOffset + BASE_SIZE_OF_ST_MEM_DATA + keyLen + valueLen >= head.memLen) {
 			rv = ERROR_NOT_ENOUGH;//not enough share memory
 			goto end;
@@ -432,13 +514,16 @@ static int getIndex(void *shmaddr,
 	return rv;
 }
 
-int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
+int shmdb_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	char **value,unsigned short *valueLen) {
 	STHashShareMemHead head;
 	struct sembuf sb;
 	struct timespec time;
 	unsigned int index = 0;
 	int rv = 0;
+	if (handle == NULL || handle->shmid == 0) {		
+		return ERROR_SHM_NOT_INIT;
+	}
 	memset(&time, 0, sizeof(time));
 	memset(&head,0,sizeof(STHashShareMemHead));
 	
@@ -459,7 +544,7 @@ int mm_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		STValueAreaData valueAreaData;
 		
 		memset(&valueAreaData,0,sizeof(STValueAreaData));
-		mm_getInfo(handle,&head);
+		shmdb_getInfo(handle,&head);
 		index = getHashNum(key,keyLen,head.baseLen);
 		printf("get the index:%d\n",index);
 		
@@ -493,8 +578,11 @@ end:
 /**
 * @notProcessSafe
 */
-int mm_dump(STHashShareHandle *handle,char *path) {
+int shmdb_dump(STHashShareHandle *handle,char *path) {
 	int rv = 0;
+	if (handle == NULL || handle->shmid == 0) {		
+		return ERROR_SHM_NOT_INIT;
+	}
 	if (path == NULL) {
 		return ERROR_PATH_NULL;
 	} else {
@@ -504,7 +592,7 @@ int mm_dump(STHashShareHandle *handle,char *path) {
 			return ERROR_FOPEN_ERROR;
 		} else {
 			void *shmaddr = (void *)handle->shmaddr;
-			mm_getInfo(handle,&head);
+			shmdb_getInfo(handle,&head);
 			fwrite(shmaddr,sizeof(char),head.memLen,fp);
 		}
 		
@@ -512,5 +600,22 @@ int mm_dump(STHashShareHandle *handle,char *path) {
 	return 0;
 }
 
-
+int shmdb_destory(STHashShareHandle *handle) {
+	
+	if (handle != NULL) {
+		int shmid = handle->shmid;
+		
+		if (shmid > 0) {
+			int ret;
+			ret = shmctl(shmid, IPC_RMID, 0);
+			if (ret) {
+				perror("delete shm:");
+				return ERROR_DESTORY_SHM;
+			} else {
+				handle->shmid = 0;
+			}
+		}
+	}
+	return 0;
+}
 

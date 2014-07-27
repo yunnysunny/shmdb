@@ -91,7 +91,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_appexp_OBJECTS = appexp-main_test.$(OBJEXT)
 appexp_OBJECTS = $(am_appexp_OBJECTS)
-appexp_DEPENDENCIES = $(top_builddir)/src/libexp.a
+appexp_DEPENDENCIES = $(top_builddir)/src/libshmdb.a
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -237,7 +237,7 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 appexp_SOURCES = main_test.c
-appexp_LDADD = $(top_builddir)/src/libexp.a
+appexp_LDADD = $(top_builddir)/src/libshmdb.a
 appexp_CPPFLAGS = -I $(top_srcdir)/src
 all: all-am
 
