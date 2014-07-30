@@ -91,7 +91,8 @@ int shmdb_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 int shmdb_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	char **value,unsigned short *valueLen);
 
-int shmdb_delete(STHashShareHandle *handle,const char *key);
+int shmdb_delete(STHashShareHandle *handle,const char *key,unsigned short keyLen,
+	char **value,unsigned short *valueLen);
 
 int shmdb_dump(STHashShareHandle *handle,char *path);
 

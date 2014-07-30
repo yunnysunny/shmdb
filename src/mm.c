@@ -20,7 +20,6 @@
 #include "transform.h"
 #include "log.h"
 
-//#define BUFFER_SIZE 2048
 
 typedef struct ValueAreaData {
 	unsigned int index;
@@ -29,6 +28,8 @@ typedef struct ValueAreaData {
 }STValueAreaData;
 
 #define LEN_GLOBAL_ERROR_MSG 256
+#define OPERATION_GET			1
+#define OPERATION_DELETE		2
 static char globalErrorMsg[LEN_GLOBAL_ERROR_MSG] = {0};
 static STHashShareHandle *handleBackup = NULL;
 
@@ -514,8 +515,8 @@ static int getIndex(void *shmaddr,
 	return rv;
 }
 
-int shmdb_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
-	char **value,unsigned short *valueLen) {
+static int shmdb_getOrDelete(STHashShareHandle *handle,const char*key,unsigned short keyLen,
+	char **value,unsigned short *valueLen,int operation) {
 	STHashShareMemHead head;
 	struct sembuf sb;
 	struct timespec time;
@@ -551,14 +552,23 @@ int shmdb_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		rv = getIndex(shmaddr,key,keyLen,index,&valueAreaData);
 		if (rv == 0) {
 			printf("get value Length:%d\n",valueAreaData.valueLen);
-			*value = (char *)malloc(sizeof(char)*(valueAreaData.valueLen+1));
-			if (value == NULL) {
-				rv = ERROR_MALLOC_MEMORY;
-				goto end;
+
+			if (valueLen != NULL) {
+				*valueLen = valueAreaData.valueLen;
+				*value = (char *)malloc(sizeof(char)*(valueAreaData.valueLen+1));
+				if (*value == NULL) {
+					rv = ERROR_MALLOC_MEMORY;
+					goto end;
+				}
+				memset(*value,0,valueAreaData.valueLen+1);
+				memcpy(*value,valueAreaData.pValue,valueAreaData.valueLen);
 			}
-			memset(*value,0,valueAreaData.valueLen+1);
-			memcpy(*value,valueAreaData.pValue,valueAreaData.valueLen);
-			*valueLen = valueAreaData.valueLen;
+			
+			if (operation == OPERATION_DELETE) {
+				
+				void *indexOffset = shmaddr + SIZE_OF_ST_HASH_SHARE_MEM_HEAD + valueAreaData.index * SIZE_OF_ST_MEM_INDEX;
+				*((unsigned char*)indexOffset) = STATUS_DEL;
+			}
 		}
 	}
 
@@ -574,6 +584,15 @@ end:
 		}
 	}
 	return rv;
+}
+
+int shmdb_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
+	char **value,unsigned short *valueLen) {
+	return shmdb_getOrDelete(handle,key,keyLen,value,valueLen,OPERATION_GET);
+}
+int shmdb_delete(STHashShareHandle *handle,const char *key,unsigned short keyLen,
+	char **value,unsigned short *valueLen) {
+	return shmdb_getOrDelete(handle,key,keyLen,value,valueLen,OPERATION_DELETE);
 }
 /**
 * @notProcessSafe

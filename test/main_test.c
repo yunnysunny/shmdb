@@ -66,6 +66,18 @@ int main()
 							printf("shmdb_get second success\n");
 							if (getValue != NULL) {
 								printf("the second value is :%s\n",getValue);
+							} else {
+								free(getValue);
+								getValue = NULL;
+							}
+							rvc = shmdb_delete(&childHandle,key,keyLen,NULL,NULL);
+							if (rvc > 0) {
+								printf("shmdb_delete error:%x\n",rvc);
+								return rvc;
+							}
+							rvc = shmdb_get(&childHandle,key,keyLen,&getValue,&getValueLen);
+							if (rvc > 0) {
+								printf("shmdb_get result:%x\n",rvc);
 							}
 						}
 						
