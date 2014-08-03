@@ -96,7 +96,7 @@ int shmdb_delete(STHashShareHandle *handle,const char *key,unsigned short keyLen
 
 int shmdb_dump(STHashShareHandle *handle,char *path);
 
-int shmdb_destory(STHashShareHandle *handle);
+int shmdb_destroy(STHashShareHandle *handle);
 
 #ifdef __cplusplus 
 } 

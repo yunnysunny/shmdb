@@ -61,14 +61,14 @@ static void print_reason(int sig, siginfo_t * info, void *secret)
 		close(fd);
 #endif
 		shmdb_dump(handleBackup,"crash.dump");
-		shmdb_destory(handleBackup);
+		shmdb_destroy(handleBackup);
 		exit(-1);
 		}
 		break;
 		case SIGINT:
 		case SIGKILL: {
 			printf("normal exit\n");
-			shmdb_destory(handleBackup);
+			shmdb_destroy(handleBackup);
 			exit(0);
 		}
 		break;
@@ -95,6 +95,10 @@ static void print_reason(int sig, siginfo_t * info, void *secret)
  * baseUsedBytes is the number of indexs used in base area.
  * 
  * initialize the share memory and semaphore in parent process.
+ * @param [in] STHashShareHandle *handle
+ * @param [in] unsigned int size the base size,which is the value of baseLenBytes
+ *
+ * @return int the result
  */
 int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 {
@@ -184,6 +188,9 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
  * initialize the share memory and semaphore in child process.
  * repeat the calling of shmat to let child process attach to the share memory.
  *
+ * @param [in] STHashShareHandle *handle
+ *
+ * @return int the result
  */
 int shmdb_initChild(STHashShareHandle *handle)
 {
@@ -239,6 +246,16 @@ int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 }
 /**
 * give the offset of value area when put a new data in mm.
+*
+* @param [in] STHashShareMemHead *head
+* @param [in] void *shmaddr
+* @param [in] char *key
+* @param unsigned short keyLen
+* @param unsigned short valueLen
+* @param [in|out]unsigned int *index
+* @param unsigned int lastIndex
+* 
+* @return void * the address of value area
 */
 static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 	char *key,unsigned short keyLen, unsigned short valueLen,
@@ -365,6 +382,13 @@ static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
 /**
  * put the value into hashtable.
  * 
+ * @param [in] STHashShareHandle *handle
+ * @param [in] const char *key
+ * @param unsigned short keyLen
+ * @param [in] const char*value
+ * @param unsigned short valueLen
+ * 
+ * @return int the result
  */
 int shmdb_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	const char *value,unsigned short valueLen)
@@ -585,17 +609,45 @@ end:
 	}
 	return rv;
 }
-
+/**
+* get value of hashtable via key
+*
+* @param [in] STHashShareHandle *handle
+* @param [in] const char *key
+* @param unsigned short keyLen
+* @param [out]  char**value 
+*               if the pointer of valueLen is NULL,it would not allocate memory for `value`
+* @param [out] unsigned short *valueLen
+* 
+* @return int the result
+*/
 int shmdb_get(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 	char **value,unsigned short *valueLen) {
 	return shmdb_getOrDelete(handle,key,keyLen,value,valueLen,OPERATION_GET);
 }
+/**
+* delete value of hashtable via key,you will get the deleted value if you pass the pointer
+* of valueLen not NULL.
+*
+* @param [in] STHashShareHandle *handle
+* @param [in] const char *key
+* @param unsigned short keyLen
+* @param [out]  char**value the value of 
+*               if the pointer of valueLen is NULL,it would not allocate memory for `value`
+* @param [out] unsigned short *valueLen
+*
+* @return int the result
+*/
 int shmdb_delete(STHashShareHandle *handle,const char *key,unsigned short keyLen,
 	char **value,unsigned short *valueLen) {
 	return shmdb_getOrDelete(handle,key,keyLen,value,valueLen,OPERATION_DELETE);
 }
 /**
+* dump current hashmap to a local file.
 * @notProcessSafe
+* 
+* @param [in] STHashShareHandle *handle
+* @param [in]char *path the path you wanna save the dump file
 */
 int shmdb_dump(STHashShareHandle *handle,char *path) {
 	int rv = 0;
@@ -618,8 +670,13 @@ int shmdb_dump(STHashShareHandle *handle,char *path) {
 	}
 	return 0;
 }
-
-int shmdb_destory(STHashShareHandle *handle) {
+/**
+* destroy the shmdb,it will remove the shared memory form the system.
+* you should call this function when you exist you application normal.
+* @param STHashShareHandle *handle
+* 
+*/
+int shmdb_destroy(STHashShareHandle *handle) {
 	
 	if (handle != NULL) {
 		int shmid = handle->shmid;

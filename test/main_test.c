@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "mm.h"
+#include "errcode.h"
 
 int main()
 {
@@ -76,8 +77,10 @@ int main()
 								return rvc;
 							}
 							rvc = shmdb_get(&childHandle,key,keyLen,&getValue,&getValueLen);
-							if (rvc > 0) {
-								printf("shmdb_get result:%x\n",rvc);
+							if (rvc == ERROR_NOT_FOUND_INDEX) {
+								printf("the key:%s has been deleted.\n",key);
+							} else {
+								printf("the result of shmdb_get:%x,something is error.\n",rvc);
 							}
 						}
 						
@@ -91,7 +94,7 @@ int main()
 			/* while(1) {
 				sleep(1);
 			} */
-			shmdb_destory(&handle);
+			shmdb_destroy(&handle);
 		}
 	}
 	return 0;
