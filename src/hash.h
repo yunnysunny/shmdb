@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-unsigned int getHashNum(char *str,unsigned int len,unsigned int maxPrime);
+unsigned int getHashNum(const char *str,unsigned int len,unsigned int maxPrime);
 
 
 #ifdef	__cplusplus

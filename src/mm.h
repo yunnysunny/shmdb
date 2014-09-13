@@ -1,5 +1,10 @@
 #ifndef _shmdb_H
 #define _shmdb_H
+#include "platform.h"
+
+#if __IS_WIN__
+#include <windows.h>
+#endif
 
 #ifdef __cplusplus 
 extern "C" { 
@@ -54,11 +59,17 @@ typedef struct HashShareMemHead {
 	unsigned int memLen;
 }STHashShareMemHead;
 
+#if __IS_WIN__
+//#define fopen	fopen_s
+#else
+typedef int HANDLE;
+#define GetLastError() (errno)
+#endif
+
 typedef struct HashShareHandle {
-	int shmid;/*share memory handel*/
-	int semid;/*semaphore handel*/
-	long shmaddr;/*share memory attach to current process*/
-	
+	HANDLE shmid;/*share memory handel*/
+	HANDLE semid;/*semaphore handel*/
+	long shmaddr;/*share memory attach to current process*/	
 }STHashShareHandle;
 
 
@@ -77,7 +88,12 @@ typedef struct HashShareHandle {
 #define MAX_LEN_OF_VALUE		(MAX_LEN_OF_ELEMENT - MAX_LEN_OF_KEY - BASE_SIZE_OF_ST_MEM_DATA)
 #define SIZE_OF_ST_HASH_SHARE_MEM_HEAD		(INT_LENGTH * 6)
 
+#if __IS_WIN__
+#define MAX_WAIT_WHEN_GET_LOCAK			100
+#else
 #define MAX_WAIT_WHEN_GET_LOCAK			100*1000*1000
+#endif
+
 
 int shmdb_initParent(STHashShareHandle *handle,unsigned int size);
 

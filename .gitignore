@@ -30,3 +30,15 @@
 /src/*.a
 
 /test/appexp
+/test/.deps
+/Debug
+
+/win32_test/Debug
+/win32_test_sub/Debug
+
+/src/Debug
+
+/*.suo
+
+/*.sdf
+/*.opensdf

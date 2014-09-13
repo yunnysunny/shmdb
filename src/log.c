@@ -30,10 +30,10 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 #include <ctype.h>
 #include <stdlib.h>
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 #include <io.h>
 #include <stdlib.h> 
-#include <Windows.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #include <sys/ipc.h>
@@ -42,28 +42,34 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #include "log.h"
+#define TIME_MAX 32
 
 unsigned int log_level     = LOG_ERROR;//Global
 
 void LogMessage(char* sModule, int nLogLevel, char *sFile,int nLine,unsigned int unErrCode, char *sMessage)
 {
+	struct tm newTimeST;
 #if defined(WIN32) || defined(WIN64)
-	DWORD nThreadID;
+	DWORD nThreadID;	
 #else
 	unsigned int nThreadID;
 #endif
-	struct tm *newtime;
+	
+	struct tm *newtime = &newTimeST;
 	time_t aclock;
+	char stTmp[TIME_MAX];
 	
 	/*Get current time*/
   	time( &aclock );                 
-	newtime = localtime( &aclock ); 
+	
 	
 	/*Get current threadid*/
 #if defined(WIN32) || defined(WIN64)
+	localtime_s(newtime, &aclock ); 
 	nThreadID = GetCurrentProcessId();
 	nThreadID = (nThreadID << 16) + GetCurrentThreadId();
 #else
+	newtime = localtime( &aclock ); 
 	nThreadID = getpid();
 	nThreadID = (nThreadID << 16) + pthread_self();
 #endif
@@ -107,6 +113,7 @@ void LogMessage(char* sModule, int nLogLevel, char *sFile,int nLine,unsigned int
 
 int errorReturn(int errorCode,char *tag,char *msg)
 {
-	SIM_ERROR_TAG(tag,errorCode,msg);
+	SIM_ERROR_TAG(errorCode,tag,msg);
 	return errorCode;
-}
+}
+

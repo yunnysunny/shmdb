@@ -2,7 +2,7 @@
 A memory database based on  shared memory.
 
 ## 1. can do 
-shmdb shared memory multi-process aimed at resolving the problem. Under linux operating system provides a shared memory feature, you can apply for a memory area by calling the system function, shmdb is the use of this feature of the operating system, the framework of a key-value type of database. When used to set up a pair of key-value through the function `shmdb_put`, also to get a pair of key-value through the function `shmdb_get`. 
+shmdb shared memory multi-process aimed at resolving the problem. Under linux or windows, operating system provides a shared memory feature, you can apply for a memory area by calling the system function, shmdb is the use of this feature of the operating system, the framework of a key-value type of database. When used to set up a pair of key-value through the function `shmdb_put`, also to get a pair of key-value through the function `shmdb_get`. 
 
 ## 2. can not do 
 shmdb does not provide network access functions can only be embedded into applications to run. It is not suitable for network databases. 
@@ -98,3 +98,8 @@ shmdb does not provide network access functions can only be embedded into applic
  **The return value** 
 
 - `int` result of the operation
+
+## Contributors
+[yunnysunny](https://github.com/yunnysunny) (maintainer)
+
+**License:** [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)

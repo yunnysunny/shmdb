@@ -2,7 +2,7 @@
 基于共享内存的内存数据库
 
 ## 1.能做什么
-shmdb旨在解决多进程的内存共享问题。linux下操作系统提供共享内存的功能，可以通过调用系统函数申请一段内存区域，shmdb就是利用了操作系统的这个特性，构架一个key-value类型的数据库。使用时，通过函数`shmdb_put`来设置一对key-value,同样通过函数`shmdb_get`来获取一对key-value。
+shmdb旨在解决多进程的内存共享问题。在linux或者windows下，操作系统提供共享内存的功能，可以通过调用系统函数申请一段内存区域，shmdb就是利用了操作系统的这个特性，构架一个key-value类型的数据库。使用时，通过函数`shmdb_put`来设置一对key-value,同样通过函数`shmdb_get`来获取一对key-value。
 
 ## 2.不能做什么
 shmdb没有提供网络访问功能，仅仅只能嵌入到应用程序中来运行。所以不适合做网络数据库使用。
@@ -98,5 +98,9 @@ shmdb没有提供网络访问功能，仅仅只能嵌入到应用程序中来运
 
 - int 操作结果
 
+## 贡献者
+[yunnysunny](https://github.com/yunnysunny) (maintainer)
+
+**License:** [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
 	
 

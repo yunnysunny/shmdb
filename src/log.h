@@ -58,7 +58,7 @@ int errorReturn(int errorCode,char *tag,char *msg);
 
 #define SIM_TRACE(msg)	LOG_WITH_TAG(LOG_TRACE,0,DEF_LOG_MODULE,msg)
 
-#define SIM_ERROR_TAG(tag,rv,msg)	LOG_WITH_TAG(LOG_ERROR,rv,tag,msg)
+#define SIM_ERROR_TAG(rv,tag,msg)	LOG_WITH_TAG(LOG_ERROR,rv,tag,msg)
 
 #define SIM_ERROR(rv,msg)	LOG_WITH_TAG(LOG_ERROR,rv,DEF_LOG_MODULE,msg)
 

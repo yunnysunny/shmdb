@@ -1,2 +1,5 @@
+v0.2 20140913
+1.add the support of windows.
+2.fix the issue of calculating the string's hash index.
 v0.1
 Use automake to create binaray.
