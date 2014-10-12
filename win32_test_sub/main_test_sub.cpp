@@ -2,7 +2,7 @@
 #include <windows.h>
 #include<iostream>  
 
-#include "../src/mm.h"
+#include "../include/mm.h"
 int main(int argc, char *argv[]) {
 	if(argc != 3) {
 		printf("参数个数必须为3个\n");

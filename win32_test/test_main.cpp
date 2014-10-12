@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <windows.h>
-#include "../src/mm.h"
+#include "../include/mm.h"
 
 int main() {
 	int ret = 0;

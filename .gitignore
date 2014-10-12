@@ -42,3 +42,11 @@
 
 /*.sdf
 /*.opensdf
+
+/Release
+
+/src/Release
+
+/win32_test/Release
+
+/win32_test_sub/Release
