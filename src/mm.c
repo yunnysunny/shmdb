@@ -177,7 +177,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	
 	unsigned int totalLen = size * 2;
 	unsigned int baseLen = size;
-	void *shm_addr;
+	LPVOID shm_addr;
 
 	HANDLE id = 0;
 	HANDLE semid = 0;
@@ -247,7 +247,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	}
 #endif
 	
-	printf("to set header:\n");
+	printf("to set header,totalLen:%d:\n",totalLen);
 	int2chars(totalLen,(unsigned char*)shm_addr);
 	int2chars(baseLen,(unsigned char*)shm_addr+4);
 		
@@ -261,10 +261,15 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	printf("set header finish:\n");
 	handle->shmid = id;
 	handle->semid = semid;
-	handle->shmaddr = (long)shm_addr;
+	handle->shmaddr = shm_addr;
 	printf("the shmid is %d\n",id);
 	rv = 0;
 	handleBackup = handle;
+	{
+		int totalLen2 = 0;
+		chars2int((unsigned char*)shm_addr,&totalLen2);
+		printf("totalLen2:%d\n",totalLen2);
+	}
 
 	addEvent();
 	return rv;
@@ -284,7 +289,7 @@ int shmdb_initChild(STHashShareHandle *handle)
 		return ERROR_SHM_NOT_INIT;
 	} else {
 		HANDLE shmid = handle->shmid;
-		void *shm_addr;
+		LPVOID shm_addr;
 		int rv;
 #if __IS_WIN__
 		if ((shm_addr=MapViewOfFile(shmid,FILE_MAP_ALL_ACCESS, 0, 0/*memory start address*/, 0))==0) {
@@ -301,7 +306,7 @@ int shmdb_initChild(STHashShareHandle *handle)
 #endif
 			
 			
-		handle->shmaddr = (long)shm_addr;
+		handle->shmaddr = shm_addr;
 
 		handleBackup = handle;
 
@@ -319,13 +324,15 @@ int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 		return ERROR_SHM_NOT_INIT;
 	} else if (head != NULL){
 		//int shmid = handle->shmid;
-		void *shmaddr = (void *)handle->shmaddr;
+		LPVOID shmaddr = (LPVOID)handle->shmaddr;
 		unsigned int baseLen = 0;
 		unsigned int totalLen = 0;
 		unsigned int totalUsed = 0;
 		unsigned int baseUsed = 0;
 		unsigned int valueOffset = 0;
 		unsigned int memLen = 0;
+		
+		printf("shmaddr:%d\n",handle->shmaddr);
 		
 		chars2int((unsigned char*)shmaddr,&totalLen);
 		head->totalLen = totalLen;
@@ -357,7 +364,7 @@ int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 * 
 * @return void * the address of value area
 */
-static void *getValueArea(STHashShareMemHead *head,void *shmaddr,
+static void *getValueArea(STHashShareMemHead *head,LPVOID shmaddr,
 	const char *key,unsigned short keyLen, unsigned short valueLen,
 	unsigned int *index,unsigned int lastIndex)
 {
@@ -574,7 +581,7 @@ int shmdb_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 		}
 		if (head.totalUsed < head.totalLen) {//can create an index 
 			unsigned int index = getHashNum(key,keyLen,head.baseLen);//get hash index number by the key string
-			void *shmaddr = (void *)handle->shmaddr;
+			LPVOID shmaddr = (LPVOID)handle->shmaddr;
 			//the MemIndex's offset in share memory
 			unsigned char*valueArea = (unsigned char*)getValueArea(&head,shmaddr,key,keyLen,valueLen,&index,0);
 			
@@ -616,7 +623,7 @@ end:
 /**
 * search the position of the index when get data
 */
-static int getIndex(void *shmaddr,
+static int getIndex(LPVOID shmaddr,
 	const char *key,unsigned short keyLen,unsigned int index,STValueAreaData *stValueAreaData) {
 	//
 	void *indexOffset = (unsigned char*)shmaddr + SIZE_OF_ST_HASH_SHARE_MEM_HEAD + index * SIZE_OF_ST_MEM_INDEX;
@@ -696,7 +703,7 @@ static int shmdb_getOrDelete(STHashShareHandle *handle,const char*key,unsigned s
 	if(rv != 0) {		
 		goto end;
 	} else {
-		void *shmaddr = (void *)handle->shmaddr;
+		LPVOID shmaddr = (LPVOID)handle->shmaddr;
 		STValueAreaData valueAreaData;
 		
 		memset(&valueAreaData,0,sizeof(STValueAreaData));

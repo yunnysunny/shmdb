@@ -66,13 +66,14 @@ typedef struct HashShareMemHead {
 //#define fopen	fopen_s
 #else
 typedef int HANDLE;
+typedef void *LPVOID;
 #define GetLastError() (errno)
 #endif
 
 typedef struct HashShareHandle {
 	HANDLE shmid;/*share memory handel*/
 	HANDLE semid;/*semaphore handel*/
-	long shmaddr;/*share memory attach to current process*/	
+	LPVOID shmaddr;/*share memory attach to current process*/	
 }STHashShareHandle;
 
 
