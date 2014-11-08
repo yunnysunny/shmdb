@@ -34,11 +34,27 @@ int main(int argc, char *argv[]) {
 	unsigned short keyLen = (unsigned short)(strlen(key));
 	shmdb_dump(&stHashShareHandle,"d:\\temp\\dump3.dp");
 	rv = shmdb_get(&stHashShareHandle,key,keyLen,&getValue,&getValueLen);
-	shmdb_dump(&stHashShareHandle,"d:\\temp\\dump4.dp");
+	
 	if (rv != 0) {
 		printf("shmdb_get error:0x%x\n",rv);
 		return rv;
 	}
+	if (getValue != NULL) {
+		printf("the value is %s\n",getValue);
+		free(getValue);
+		getValue = NULL;
+	} else {
+							
+	}
+	const char *valueNew = "newValue";
+	unsigned short newValueLen = (unsigned short)(strlen(valueNew));
+	rv = shmdb_put(&stHashShareHandle,key,keyLen,valueNew,newValueLen);
+	if (rv != 0) {
+		printf("shmdb_put error:0x%x\n",rv);
+		return rv;
+	}
+
+	shmdb_dump(&stHashShareHandle,"d:\\temp\\dump4.dp");
 	if (getValue != NULL) {
 		printf("the value is %s\n",getValue);
 		free(getValue);

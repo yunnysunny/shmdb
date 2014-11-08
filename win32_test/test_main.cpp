@@ -59,6 +59,16 @@ int main() {
         &si, // 决定新进程的主窗体如何显示的STARTUPINFO结构体  
         &pi  // 接收新进程的识别信息的PROCESS_INFORMATION结构体  
         );
+	for(int i=0;i<5;i++) {
+		rv = shmdb_get(&handle,key,keyLen,&getValue,&getValueLen);
+		if (rv == 0) {
+			printf("%dth get,value is %s\n",i,getValue);
+			free(getValue);
+		} else {
+			printf("%dth get failed:0x%x\n",rv);
+		}
+		Sleep(1000);
+	}
 	WaitForSingleObject( pi.hProcess, INFINITE );  /*Wait until child process exit*/
 	if (ret != 0) {
 		CloseHandle(pi.hProcess);
