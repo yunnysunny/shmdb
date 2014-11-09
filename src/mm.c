@@ -44,7 +44,7 @@ typedef void (*SignalHandlerPointer)(int);
 
 static void print_reason(int sig)
 {
-	printf("get a single [%d]\n",sig);
+	SIM_TRACE("get a single [%d]\n",sig);
 	switch(sig) {
 		case SIGSEGV:
 		case SIGFPE:
@@ -57,7 +57,7 @@ static void print_reason(int sig)
 		}
 		break;
 		case SIGINT: {
-			printf("normal exit\n");
+			SIM_TRACE("normal exit\n");
 			shmdb_destroy(handleBackup);
 			exit(0);
 		}
@@ -70,7 +70,7 @@ static void print_reason(int sig)
 #else
 static void print_reason(int sig, siginfo_t * info, void *secret)
 {
-	printf("get a single [%d]\n",sig);
+	SIM_TRACE("get a single [%d]\n",sig);
 	switch(sig) {
 		case SIGSEGV:
 		case SIGFPE:
@@ -85,9 +85,9 @@ static void print_reason(int sig, siginfo_t * info, void *secret)
 		size_t i;
 		size = backtrace(array, 10);
 		strings = backtrace_symbols(array, size);
-		printf("Obtained %zd stack frames.\n", size);
+		SIM_TRACE("Obtained %zd stack frames.\n", size);
 		for (i = 0; i < size; i++)
-		printf("%s\n", strings[i]);
+		SIM_TRACE("%s\n", strings[i]);
 		free(strings);
 #else
 		int fd = open("err.log", "w+");
@@ -102,7 +102,7 @@ static void print_reason(int sig, siginfo_t * info, void *secret)
 		break;
 		case SIGINT:
 		case SIGKILL: {
-			printf("normal exit\n");
+			SIM_TRACE("normal exit\n");
 			shmdb_destroy(handleBackup);
 			exit(0);
 		}
@@ -195,7 +195,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	baseLen = maxPrime;
 	valueOffset = SIZE_OF_ST_HASH_SHARE_MEM_HEAD + space*SIZE_OF_ST_MEM_INDEX;
 	memLen += (valueOffset + space * MAX_LEN_OF_ELEMENT);
-	printf("the len wanna get:%d\n",memLen);
+	SIM_TRACE("the len wanna get:%d\n",memLen);
 
 #if __IS_WIN__		
 	sa.nLength=sizeof(sa);
@@ -206,7 +206,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 		rv = GetLastError();
 		return rv;
 	}
-	printf("get semid:%d\n",semid);
+	SIM_TRACE("get semid:%d\n",semid);
 
 	
 	if ((id=CreateFileMapping(INVALID_HANDLE_VALUE,&sa,PAGE_READWRITE,0,memLen,NULL))==0) {
@@ -230,7 +230,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	} else {                
 		semctl(semid, 0, SETVAL, 1); //初始化信号量为1
 	}
-	printf("get semid:%d\n",semid);
+	SIM_TRACE("get semid:%d\n",semid);
 	
 	if ((id=shmget(IPC_PRIVATE,memLen,0600))<0) {
 		perror("shmget error");
@@ -247,7 +247,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	}
 #endif
 	
-	printf("to set header,totalLen:%d:\n",totalLen);
+	SIM_TRACE("to set header,totalLen:%d:\n",totalLen);
 	int2chars(totalLen,(unsigned char*)shm_addr);
 	int2chars(baseLen,(unsigned char*)shm_addr+4);
 		
@@ -258,17 +258,17 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	int2chars(memLen,(unsigned char*)shm_addr+20);//memLen
 	memset((char*)shm_addr+24,0,memLen-24);//clear the index area and the value area
 	
-	printf("set header finish:\n");
+	SIM_TRACE("set header finish:\n");
 	handle->shmid = id;
 	handle->semid = semid;
 	handle->shmaddr = shm_addr;
-	printf("the shmid is %d\n",id);
+	SIM_TRACE("the shmid is %d\n",id);
 	rv = 0;
 	handleBackup = handle;
 	{
 		int totalLen2 = 0;
 		chars2int((unsigned char*)shm_addr,&totalLen2);
-		printf("totalLen2:%d\n",totalLen2);
+		SIM_TRACE("totalLen2:%d\n",totalLen2);
 	}
 
 	addEvent();
@@ -285,7 +285,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 int shmdb_initChild(STHashShareHandle *handle)
 {
 	if (handle == NULL || handle->shmid == 0) {
-		printf("the handle is null\n");
+		SIM_TRACE("the handle is null\n");
 		return ERROR_SHM_NOT_INIT;
 	} else {
 		HANDLE shmid = handle->shmid;
@@ -294,7 +294,7 @@ int shmdb_initChild(STHashShareHandle *handle)
 #if __IS_WIN__
 		if ((shm_addr=MapViewOfFile(shmid,FILE_MAP_ALL_ACCESS, 0, 0/*memory start address*/, 0))==0) {
 			rv = GetLastError();
-			printf("MapViewOfFile error:%d\n",rv);
+			SIM_TRACE("MapViewOfFile error:%d\n",rv);
 			return rv;
 		}
 #else
@@ -320,7 +320,7 @@ int shmdb_initChild(STHashShareHandle *handle)
 int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 {
 	if (handle == NULL || handle->shmid == 0) {
-		printf("the handle is null\n");
+		SIM_TRACE("the handle is null\n");
 		return ERROR_SHM_NOT_INIT;
 	} else if (head != NULL){
 		//int shmid = handle->shmid;
@@ -332,7 +332,7 @@ int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 		unsigned int valueOffset = 0;
 		unsigned int memLen = 0;
 		
-		printf("shmaddr:%d\n",handle->shmaddr);
+		SIM_TRACE("shmaddr:%d\n",handle->shmaddr);
 		
 		chars2int((unsigned char*)shmaddr,&totalLen);
 		head->totalLen = totalLen;
@@ -344,7 +344,7 @@ int shmdb_getInfo(STHashShareHandle *handle, STHashShareMemHead *head)
 		head->baseUsed = baseUsed;
 		chars2int((unsigned char*)(shmaddr)+16,&valueOffset);
 		head->valueOffset = valueOffset;
-		printf("the base len is %d\n",baseLen);
+		SIM_TRACE("the base len is %d\n",baseLen);
 		chars2int((unsigned char*)(shmaddr)+20,&memLen);
 		head->memLen = memLen;
 	}
@@ -479,7 +479,7 @@ static void *getValueArea(STHashShareMemHead *head,LPVOID shmaddr,
 			}
 			break;
 			default:
-			printf("invalid status:%d\n",*((unsigned char*)indexOffset));
+			SIM_TRACE("invalid status:%d\n",*((unsigned char*)indexOffset));
 			return NULL;
 			break;
 		}
@@ -511,7 +511,7 @@ static int getLock(HANDLE semid,void *sbSt) {
 		rv = ERROR_GET_LOCK;		
 	}
 #endif
-	printf("semid : %d\n",semid);
+	SIM_TRACE("semid : %d\n",semid);
 	return rv;
 }
 
@@ -585,7 +585,7 @@ int shmdb_put(STHashShareHandle *handle,const char*key,unsigned short keyLen,
 			//the MemIndex's offset in share memory
 			unsigned char*valueArea = (unsigned char*)getValueArea(&head,shmaddr,key,keyLen,valueLen,&index,0);
 			
-			printf("the index wanna put:%d,dataoffset:0x%x\n",index,(valueArea-(unsigned char*)shmaddr));//
+			SIM_TRACE("the index wanna put:%d,dataoffset:0x%x\n",index,(valueArea-(unsigned char*)shmaddr));//
 			if (valueArea == NULL) {
 				rv = ERROR_GET_INDEX;
 				goto end;
@@ -634,7 +634,7 @@ static int getIndex(LPVOID shmaddr,
 	if (stValueAreaData == NULL) {
 		return ERROR_NULL_MEMDATA;
 	}
-	printf("index:%d,status:%d\n",index,status);
+	SIM_TRACE("index:%d,status:%d\n",index,status);
 	switch(status) {
 		case STATUS_UNSED:
 		break;
@@ -643,10 +643,10 @@ static int getIndex(LPVOID shmaddr,
 			
 			unsigned short existKeyLen = 0;
 			chars2int((unsigned char*)indexOffset+1,&dataOffset);//get the data area address
-			printf("dataOffset:%d\n",dataOffset);
+			SIM_TRACE("dataOffset:%d\n",dataOffset);
 			valueArea = (unsigned char*)shmaddr + dataOffset;
 			chars2short((unsigned char*)valueArea+4,&existKeyLen);///get key length
-			printf("existKeyLen:%d\n",existKeyLen);
+			SIM_TRACE("existKeyLen:%d\n",existKeyLen);
 			if (keyLen == existKeyLen && strncmp((char *)valueArea+6,key,keyLen) == 0) {
 				unsigned short existValueLen = 0;
 				stValueAreaData->index = index;				
@@ -710,11 +710,11 @@ static int shmdb_getOrDelete(STHashShareHandle *handle,const char*key,unsigned s
 		memset(&head,0,sizeof(STHashShareMemHead));
 		shmdb_getInfo(handle,&head);
 		index = getHashNum(key,keyLen,head.baseLen);
-		printf("get the index:%d\n",index);
+		SIM_TRACE("get the index:%d\n",index);
 		
 		rv = getIndex(shmaddr,key,keyLen,index,&valueAreaData);
 		if (rv == 0) {
-			printf("get value Length:%d\n",valueAreaData.valueLen);
+			SIM_TRACE("get value Length:%d\n",valueAreaData.valueLen);
 
 			if (valueLen != NULL) {
 				*valueLen = valueAreaData.valueLen;

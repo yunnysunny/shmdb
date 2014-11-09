@@ -59,10 +59,12 @@ int main() {
         &si, // 决定新进程的主窗体如何显示的STARTUPINFO结构体  
         &pi  // 接收新进程的识别信息的PROCESS_INFORMATION结构体  
         );
+	const char *key2 = "xx";
+	unsigned short key2Len = (unsigned short)(strlen(key2));
 	for(int i=0;i<5;i++) {
-		rv = shmdb_get(&handle,key,keyLen,&getValue,&getValueLen);
+		rv = shmdb_get(&handle,key2,key2Len,&getValue,&getValueLen);
 		if (rv == 0) {
-			printf("%dth get,value is %s\n",i,getValue);
+			printf("%dth get xx,value is %s\n",i,getValue);
 			free(getValue);
 		} else {
 			printf("%dth get failed:0x%x\n",rv);

@@ -30,48 +30,46 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 extern "C" { 
 #endif
 
-#define LOG_NONE      0  //不记录日志
-#define LOG_FAULT      1  //致命错误，会导致返回错误或引起程序异常
-#define LOG_ERROR     2  //一般错误，内部错误不向上层返回错误，建议解决
-#define LOG_WARN   3  //警告信息，不是期望的结果，不会引起错误，但要用户引起重视
-#define LOG_INFO      4  //重要变量，有助于解决问题
-#define LOG_DEBUG     5  //调试信息，可打印二进制数据
-#define LOG_TRACE     6  //跟踪执行，用于跟踪逻辑判断
+#define LEVEL_NONE      0  //
+#define LEVEL_FAULT      1  //
+#define LEVEL_ERROR     2  //
+#define LEVEL_WARN   3  //
+#define LEVEL_INFO      4  //
+#define LEVEL_DEBUG     5  //
+#define LEVEL_TRACE     6  //
 
 #define DEFAULT_LOG_MODULE "logger"
 
-extern unsigned int log_level;     //Global
+void setLogLevel(int nLogLevel);
 
-#define LOG(lvl, rv, msg) \
-        do { \
-        if ((lvl) <= log_level) {\
-        	LogMessage(DEFAULT_LOG_MODULE, lvl, __FILE__, __LINE__, rv, msg);} \
-        } while (0)
+void setLogFile(const char *fileName);
 
-void LogMessage(char* sModule, int nLogLevel, char *sFile,int nLine,unsigned int unErrCode, char *sMessage);
+void LogMessage(char* sModule, int nLogLevel, char *sFile,int nLine,char *fmt, ...);
 
 int errorReturn(int errorCode,char *tag,char *msg);
 
-#define LOG_WITH_TAG(lvl, rv, tag,msg) LogMessage(lvl, tag, __FILE__, __LINE__, rv, msg)
+#define LOG(lvl, rv, msg) LogMessage(DEFAULT_LOG_MODULE, lvl, __FILE__, __LINE__,"[%08x][%s]", rv, msg);
 
-#define SIM_TRACE_TAG(tag,msg)	LOG_WITH_TAG(LOG_TRACE,0,tag,msg)
+#define LOG_WITH_TAG(lvl,  tag, rv, msg) LogMessage( tag,lvl, __FILE__, __LINE__, "[%08x][%s]", rv,msg)
 
-#define SIM_TRACE(msg)	LOG_WITH_TAG(LOG_TRACE,0,DEF_LOG_MODULE,msg)
-
-#define SIM_ERROR_TAG(rv,tag,msg)	LOG_WITH_TAG(LOG_ERROR,rv,tag,msg)
-
-#define SIM_ERROR(rv,msg)	LOG_WITH_TAG(LOG_ERROR,rv,DEF_LOG_MODULE,msg)
-
-#define SIM_WARN_TAG(tag,rv,msg)	LOG_WITH_TAG(LOG_WARN,rv,tag,msg)
-
-#define SIM_WARN(rv,msg)	LOG_WITH_TAG(LOG_WARNING,rv,DEF_LOG_MODULE,msg)
-
-#define SIM_INFO_TAG(tag,rv,msg)	LOG_WITH_TAG(LOG_INFO,rv,tag,msg)
-
-#define SIM_INFO(rv,msg)	LOG_WITH_TAG(LOG_INFO,rv,DEF_LOG_MODULE,msg)
-
-#define ERROR_RETURN(rv,msg) errorReturn(rv,DEF_LOG_MODULE,msg)
-#define ERROR_RETURN_TAG(rv,tag,msg) errorReturn(rv,tag,msg)
+#if defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
+#ifndef _MSC_VER  
+#define _MSC_VER 1600 
+#endif 
+#define SIM_TRACE(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_TRACE, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_DEBUG(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_DEBUG, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_INFO(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_INFO, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_WARN(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_WARN, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_ERROR(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_ERROR, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_FAULT(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_FAULT, __FILE__, __LINE__,format,##__VA_ARGS__)
+#else
+#define SIM_TRACE(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_TRACE, __FILE__, __LINE__,format,##args)
+#define SIM_DEBUG(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_DEBUG, __FILE__, __LINE__,format,##args)
+#define SIM_INFO(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_INFO, __FILE__, __LINE__,format,##args)
+#define SIM_WARN(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_WARN, __FILE__, __LINE__,format,##args)
+#define SIM_ERROR(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_ERROR, __FILE__, __LINE__,format,##args)
+#define SIM_FAULT(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_FAULT, __FILE__, __LINE__,format,##args)
+#endif
 
 #ifdef __cplusplus 
 } 

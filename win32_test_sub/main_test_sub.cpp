@@ -46,9 +46,11 @@ int main(int argc, char *argv[]) {
 	} else {
 							
 	}
+	const char *key2 = "xx";
+	unsigned short key2Len = (unsigned short)(strlen(key2));
 	const char *valueNew = "newValue";
 	unsigned short newValueLen = (unsigned short)(strlen(valueNew));
-	rv = shmdb_put(&stHashShareHandle,key,keyLen,valueNew,newValueLen);
+	rv = shmdb_put(&stHashShareHandle,key2,key2Len,valueNew,newValueLen);
 	if (rv != 0) {
 		printf("shmdb_put error:0x%x\n",rv);
 		return rv;
