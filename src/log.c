@@ -47,9 +47,13 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 #define TIME_MAX										32
 #define COUNT_ERROR_LEVEL								6
 #define MAX_LOG_FILE_NAME_LEN							256
+#ifndef __DEFAULT_LOG_LEVEL
+#define __DEFAULT_LOG_LEVEL								LEVEL_WARN
+#endif
+
 char *errorLevel[COUNT_ERROR_LEVEL]						= {"FAULT","ERROR","WARN","INFO","DEBUG","TRACE"};
 
-static int logLevel							= LEVEL_TRACE;//
+static int logLevel										= __DEFAULT_LOG_LEVEL;//
 static char logFileName[MAX_LOG_FILE_NAME_LEN]          = {0};
 
 void setLogLevel(int nLogLevel) {
@@ -91,7 +95,7 @@ void setLogFile(const char *fileName) {
 }
 
 
-void LogMessage(char* sModule, int nLogLevel, char *sFile,int nLine,char *fmt, ...)
+void printLog(char* sModule, int nLogLevel, char *sFile,int nLine,char *fmt, ...)
 {
 	struct tm newTimeST;
 #if __IS_WIN__

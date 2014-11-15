@@ -44,31 +44,31 @@ void setLogLevel(int nLogLevel);
 
 void setLogFile(const char *fileName);
 
-void LogMessage(char* sModule, int nLogLevel, char *sFile,int nLine,char *fmt, ...);
+void printLog(char* sModule, int nLogLevel, char *sFile,int nLine,char *fmt, ...);
 
 int errorReturn(int errorCode,char *tag,char *msg);
 
-#define LOG(lvl, rv, msg) LogMessage(DEFAULT_LOG_MODULE, lvl, __FILE__, __LINE__,"[%08x][%s]", rv, msg);
+#define LOG(lvl, rv, msg) printLog(DEFAULT_LOG_MODULE, lvl, __FILE__, __LINE__,"[%08x][%s]", rv, msg);
 
-#define LOG_WITH_TAG(lvl,  tag, rv, msg) LogMessage( tag,lvl, __FILE__, __LINE__, "[%08x][%s]", rv,msg)
+#define LOG_WITH_TAG(lvl,  tag, rv, msg) printLog( tag,lvl, __FILE__, __LINE__, "[%08x][%s]", rv,msg)
 
 #if defined(WIN32) || defined(WIN64) || defined(_WIN32) || defined(_WIN64)
 #ifndef _MSC_VER  
 #define _MSC_VER 1600 
 #endif 
-#define SIM_TRACE(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_TRACE, __FILE__, __LINE__,format,##__VA_ARGS__)
-#define SIM_DEBUG(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_DEBUG, __FILE__, __LINE__,format,##__VA_ARGS__)
-#define SIM_INFO(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_INFO, __FILE__, __LINE__,format,##__VA_ARGS__)
-#define SIM_WARN(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_WARN, __FILE__, __LINE__,format,##__VA_ARGS__)
-#define SIM_ERROR(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_ERROR, __FILE__, __LINE__,format,##__VA_ARGS__)
-#define SIM_FAULT(format,...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_FAULT, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_TRACE(format,...) printLog(DEFAULT_LOG_MODULE, LEVEL_TRACE, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_DEBUG(format,...) printLog(DEFAULT_LOG_MODULE, LEVEL_DEBUG, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_INFO(format,...) printLog(DEFAULT_LOG_MODULE, LEVEL_INFO, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_WARN(format,...) printLog(DEFAULT_LOG_MODULE, LEVEL_WARN, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_ERROR(format,...) printLog(DEFAULT_LOG_MODULE, LEVEL_ERROR, __FILE__, __LINE__,format,##__VA_ARGS__)
+#define SIM_FAULT(format,...) printLog(DEFAULT_LOG_MODULE, LEVEL_FAULT, __FILE__, __LINE__,format,##__VA_ARGS__)
 #else
-#define SIM_TRACE(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_TRACE, __FILE__, __LINE__,format,##args)
-#define SIM_DEBUG(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_DEBUG, __FILE__, __LINE__,format,##args)
-#define SIM_INFO(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_INFO, __FILE__, __LINE__,format,##args)
-#define SIM_WARN(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_WARN, __FILE__, __LINE__,format,##args)
-#define SIM_ERROR(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_ERROR, __FILE__, __LINE__,format,##args)
-#define SIM_FAULT(format,args...) LogMessage(DEFAULT_LOG_MODULE, LEVEL_FAULT, __FILE__, __LINE__,format,##args)
+#define SIM_TRACE(format,args...) printLog(DEFAULT_LOG_MODULE, LEVEL_TRACE, __FILE__, __LINE__,format,##args)
+#define SIM_DEBUG(format,args...) printLog(DEFAULT_LOG_MODULE, LEVEL_DEBUG, __FILE__, __LINE__,format,##args)
+#define SIM_INFO(format,args...) printLog(DEFAULT_LOG_MODULE, LEVEL_INFO, __FILE__, __LINE__,format,##args)
+#define SIM_WARN(format,args...) printLog(DEFAULT_LOG_MODULE, LEVEL_WARN, __FILE__, __LINE__,format,##args)
+#define SIM_ERROR(format,args...) printLog(DEFAULT_LOG_MODULE, LEVEL_ERROR, __FILE__, __LINE__,format,##args)
+#define SIM_FAULT(format,args...) printLog(DEFAULT_LOG_MODULE, LEVEL_FAULT, __FILE__, __LINE__,format,##args)
 #endif
 
 #ifdef __cplusplus 

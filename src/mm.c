@@ -230,7 +230,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size)
 	} else {                
 		semctl(semid, 0, SETVAL, 1); //初始化信号量为1
 	}
-	SIM_TRACE("get semid:%d\n",semid);
+	SIM_TRACE("create semid:%d\n",semid);
 	
 	if ((id=shmget(IPC_PRIVATE,memLen,0600))<0) {
 		perror("shmget error");
