@@ -17,6 +17,7 @@ shmdb does not provide network access functions can only be embedded into applic
 
 - [In | out] `STHashShareHandle * handle`	`shmid`,which is the   member variable of `handle` will ben initialize in this function  
 - `unsigned int size` specified base area 
+- [In] `STShmdbOption *option` the option of log,can be NULL.
 
  **The return value** 
 
