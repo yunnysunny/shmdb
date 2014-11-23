@@ -62,6 +62,10 @@ typedef struct HashShareMemHead {
 	unsigned int memLen;
 }STHashShareMemHead;
 
+typedef struct ShmdbOption {
+	int logLevel;
+}STShmdbOption;
+
 #if __IS_WIN__
 //#define fopen	fopen_s
 #else
@@ -99,7 +103,7 @@ typedef struct HashShareHandle {
 #endif
 
 
-int shmdb_initParent(STHashShareHandle *handle,unsigned int size);
+int shmdb_initParent(STHashShareHandle *handle,unsigned int size,STShmdbOption *option);
 
 int shmdb_initChild(STHashShareHandle *handle);
 
