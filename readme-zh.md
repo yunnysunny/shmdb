@@ -19,6 +19,7 @@ shmdb没有提供网络访问功能，仅仅只能嵌入到应用程序中来运
 - unsigned int size 指定base区域的长度  
 - [in] STShmdbOption *option 日志选项，可以为NULL
 
+
 **返回值**	
 
 - int 操作结果

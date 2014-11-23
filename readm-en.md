@@ -19,6 +19,7 @@ shmdb does not provide network access functions can only be embedded into applic
 - `unsigned int size` specified base area 
 - [In] `STShmdbOption *option` the option of log,can be NULL.
 
+
  **The return value** 
 
 - int result of the operation 

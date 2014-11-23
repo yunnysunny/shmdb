@@ -62,6 +62,7 @@ typedef struct HashShareMemHead {
 	unsigned int memLen;
 }STHashShareMemHead;
 
+
 typedef struct ShmdbOption {
 	int logLevel;
 }STShmdbOption;

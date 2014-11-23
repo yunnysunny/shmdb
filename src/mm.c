@@ -40,6 +40,7 @@ typedef struct ValueAreaData {
 static char globalErrorMsg[LEN_GLOBAL_ERROR_MSG] = {0};
 static STHashShareHandle *handleBackup = NULL;
 static int isParent = 1;
+
 #if __IS_WIN__
 typedef void (*SignalHandlerPointer)(int);
 
@@ -61,11 +62,12 @@ static void print_reason(int sig)
 		}
 		break;
 		case SIGINT: {
+
 			SIM_INFO("normal exit\n");
 			if (isParent == 1) {
 				shmdb_destroy(handleBackup);
 			}
-			
+
 			exit(0);
 		}
 		break;
@@ -95,6 +97,7 @@ static void print_reason(int sig, siginfo_t * info, void *secret)
 		SIM_ERROR("Obtained %zd stack frames.\n", size);
 		for (i = 0; i < size; i++)
 		SIM_ERROR("%s\n", strings[i]);
+
 		free(strings);
 #else
 		int fd = open("err.log", "w+");
@@ -103,20 +106,21 @@ static void print_reason(int sig, siginfo_t * info, void *secret)
 		close(fd);
 #endif
 		shmdb_dump(handleBackup,"crash.dump");
+
 		if (isParent == 1) {
 			shmdb_destroy(handleBackup);
 		}
-		
+
 		exit(-1);
 		}
 		break;
 		case SIGINT:
 		case SIGKILL: {
+
 			SIM_INFO("normal exit\n");
 			if (isParent == 1) {
 				shmdb_destroy(handleBackup);
 			}
-
 			exit(0);
 		}
 		break;
@@ -206,6 +210,7 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size,STShmdbOption *
 	if (option != NULL) {
 		setLogLevel(option->logLevel);
 	}	
+
 
 	space = (maxPrime * 2);//total index count
 	totalLen = space;
@@ -326,7 +331,9 @@ int shmdb_initChild(STHashShareHandle *handle)
 		handle->shmaddr = shm_addr;
 
 		handleBackup = handle;
+
 		isParent = 0;
+
 		addEvent();
 	}
 	return 0;

@@ -14,6 +14,7 @@ unsigned int getMaxPrime(unsigned int num)
         for(m = 0; m <= 1; m++)
         {
             unsigned int tmp = 2 * (3 * n + m) - 1;//6n+-1
+
             int find = 1;
             if (tmp > num) {
             	goto label1;
