@@ -288,11 +288,6 @@ int shmdb_initParent(STHashShareHandle *handle,unsigned int size,STShmdbOption *
 	SIM_TRACE("the shmid is %d\n",id);
 	rv = 0;
 	handleBackup = handle;
-	{
-		int totalLen2 = 0;
-		chars2int((unsigned char*)shm_addr,&totalLen2);
-		SIM_TRACE("totalLen2:%d\n",totalLen2);
-	}
 
 	addEvent();
 	return rv;
