@@ -37,7 +37,8 @@ typedef struct ValueAreaData {
 #define LEN_GLOBAL_ERROR_MSG 256
 #define OPERATION_GET			1
 #define OPERATION_DELETE		2
-static char globalErrorMsg[LEN_GLOBAL_ERROR_MSG] = {0};
+
+//static char globalErrorMsg[LEN_GLOBAL_ERROR_MSG] = {0};
 static STHashShareHandle *handleBackup = NULL;
 static int isParent = 1;
 
@@ -100,7 +101,7 @@ static void print_reason(int sig, siginfo_t * info, void *secret)
 
 		free(strings);
 #else
-		int fd = open("err.log", "w+");
+		int fd = open("err.log", O_WRONLY);
 		size = backtrace(array, 10);
 		backtrace_symbols_fd(array, size, fd);
 		close(fd);
@@ -836,7 +837,7 @@ int shmdb_dump(STHashShareHandle *handle,char *path) {
 		}
 		
 	}
-	return 0;
+	return rv;
 }
 /**
 * destroy the shmdb,it will remove the shared memory form the system.
