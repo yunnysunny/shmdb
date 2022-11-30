@@ -1,4 +1,6 @@
 # shmdb 
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fyunnysunny%2Fshmdb.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fyunnysunny%2Fshmdb?ref=badge_shield)
+
 A memory database based on  shared memory.
 
 ## 1. can do 
@@ -103,3 +105,6 @@ shmdb does not provide network access functions can only be embedded into applic
 [yunnysunny](https://github.com/yunnysunny) (maintainer)
 
 **License:** [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fyunnysunny%2Fshmdb.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fyunnysunny%2Fshmdb?ref=badge_large)
